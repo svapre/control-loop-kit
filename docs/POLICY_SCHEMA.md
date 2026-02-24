@@ -42,6 +42,7 @@ This document defines the expected shape of `.control-loop/policy.json`.
 - `process_guideline_fields`: process markers (how work should be executed)
 - `project_guideline_fields`: project quality markers (what output quality is required)
 - `execution_phase_rules`: session-based phase/scope controls for `think` vs `implement` execution
+- `contract_lifecycle_rules`: active-contract enforcement for controlled implementation scopes
 - `default_branch`: string (for merge-base and diff baseline)
 - session checks are controlled via `ai_settings.session_log`
 - `design_principle_rules`: proposal field-value enforcement with per-rule severity (`strict` / `warn` / `manual_review`)
@@ -77,6 +78,31 @@ This document defines the expected shape of `.control-loop/policy.json`.
   "allowed_phases": ["think", "implement"],
   "allowed_scopes": ["project", "toolkit", "both"],
   "toolkit_prefixes": ["tooling/control-loop-kit"]
+}
+```
+
+### Contract lifecycle rule profile
+```json
+"contract_lifecycle_rules": {
+  "enabled": true,
+  "contract_path": ".control-loop/contracts.json",
+  "id_pattern": "^CT-\\d{3}$",
+  "allowed_statuses": ["draft", "approved", "active", "validated", "completed", "blocked", "stale", "cancelled"],
+  "active_statuses": ["active"],
+  "approval_flag_field": "approved",
+  "approval_actor_field": "approved_by",
+  "backlog_item_id_field": "backlog_item_id",
+  "base_commit_field": "base_commit",
+  "include_paths_field": "include_paths",
+  "exclude_paths_field": "exclude_paths",
+  "require_backlog_item_link": true,
+  "require_approval": true,
+  "require_base_commit_validation": true,
+  "max_commits_since_base": 60,
+  "enforce_prefixes": ["core/", "scripts/", "control_loop/"],
+  "enforce_files": ["main.py"],
+  "ignore_prefixes": ["docs/"],
+  "ignore_files": ["README.md", "CHANGELOG.md"]
 }
 ```
 

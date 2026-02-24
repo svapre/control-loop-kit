@@ -1,0 +1,40 @@
+{
+  "meta": {
+    "schema_version": "1",
+    "last_updated": "2026-02-24",
+    "description": "Execution contracts that gate implementation scope."
+  },
+  "contracts": [
+    {
+      "id": "CT-001",
+      "title": "BL-002 contract lifecycle enforcement baseline",
+      "status": "active",
+      "approved": true,
+      "approved_by": "user",
+      "backlog_item_id": "BL-002",
+      "base_commit": "89aeb60ce97ea76da3328fe575451b834e8a534c",
+      "include_paths": [
+        "control_loop/",
+        "scripts/",
+        "tests/",
+        "docs/",
+        ".github/workflows/",
+        ".control-loop/contracts.json",
+        ".control-loop/backlog.json",
+        ".control-loop/setpoints.json",
+        "README.md",
+        "CHANGELOG.md",
+        "pyproject.toml"
+      ],
+      "exclude_paths": [],
+      "acceptance_checks": [
+        "python scripts/validate_backlog.py --check",
+        "python scripts/render_dashboard.py --check",
+        "python -m ruff check .",
+        "python -m pytest -q"
+      ],
+      "created_on": "2026-02-24",
+      "updated_on": "2026-02-24"
+    }
+  ]
+}

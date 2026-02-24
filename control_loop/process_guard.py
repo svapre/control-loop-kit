@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import re
 import subprocess
 from pathlib import Path
@@ -50,6 +51,10 @@ def static_rule_config(policy: dict[str, Any]) -> dict[str, Any]:
 
 def phase_rule_config(policy: dict[str, Any]) -> dict[str, Any]:
     return process_policy(policy).get("execution_phase_rules", {})
+
+
+def contract_rule_config(policy: dict[str, Any]) -> dict[str, Any]:
+    return process_policy(policy).get("contract_lifecycle_rules", {})
 
 
 def process_enforcement_state(policy: dict[str, Any]) -> tuple[bool, str]:
@@ -438,9 +443,18 @@ def check_session_sections(session_files: list[str], policy: dict[str, Any]) -> 
 
 
 def path_matches_rule(path: str, rule: str) -> bool:
-    if rule.endswith("/"):
-        return path.startswith(rule)
-    return path == rule
+    normalized = rule.strip()
+    if not normalized:
+        return False
+    if normalized.endswith("/"):
+        return path.startswith(normalized)
+    if path == normalized:
+        return True
+    return path.startswith(f"{normalized}/")
+
+
+def path_matches_any(path: str, rules: list[str]) -> bool:
+    return any(path_matches_rule(path, rule) for rule in rules)
 
 
 def check_static_guard_rules(
@@ -592,6 +606,199 @@ def check_phase_scope_rules(
     return failures
 
 
+def contract_target_paths(changed_files: set[str], policy: dict[str, Any]) -> list[str]:
+    cfg = contract_rule_config(policy)
+    enforce_prefixes = cfg.get(
+        "enforce_prefixes",
+        process_policy(policy).get("implementation_prefixes", []),
+    )
+    enforce_files = cfg.get("enforce_files", process_policy(policy).get("implementation_files", []))
+    ignore_prefixes = cfg.get("ignore_prefixes", [])
+    ignore_files = cfg.get("ignore_files", [])
+
+    targets: list[str] = []
+    for path in sorted(changed_files):
+        if path in ignore_files or path_matches_any(path, ignore_prefixes):
+            continue
+        if path in enforce_files or path_matches_any(path, enforce_prefixes):
+            targets.append(path)
+    return targets
+
+
+def load_contracts_file(contract_path: Path) -> tuple[dict[str, Any] | None, list[str]]:
+    failures: list[str] = []
+    if not contract_path.exists():
+        return None, [f"Missing contract lifecycle file: {contract_path.as_posix()}"]
+    try:
+        data = json.loads(contract_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        return None, [f"Invalid JSON in contract lifecycle file {contract_path.as_posix()}: {exc}"]
+    if not isinstance(data, dict):
+        return None, [f"Contract lifecycle file must be an object: {contract_path.as_posix()}"]
+    return data, failures
+
+
+def normalize_contract_list(raw: Any, contract_path: Path) -> tuple[list[dict[str, Any]], list[str]]:
+    failures: list[str] = []
+    if not isinstance(raw, list):
+        return [], [f"Contract lifecycle file {contract_path.as_posix()} must define 'contracts' as an array."]
+    contracts: list[dict[str, Any]] = []
+    for idx, item in enumerate(raw):
+        if not isinstance(item, dict):
+            failures.append(f"contracts[{idx}] in {contract_path.as_posix()} must be an object.")
+            continue
+        contracts.append(item)
+    return contracts, failures
+
+
+def check_contract_base_staleness(base_commit: str, max_commits: int) -> tuple[list[str], list[str]]:
+    failures: list[str] = []
+    warnings: list[str] = []
+
+    rc, _, err = run_command(["git", "cat-file", "-e", f"{base_commit}^{{commit}}"])
+    if rc != 0:
+        failures.append(f"Contract base commit '{base_commit}' is not a valid commit: {err or 'git cat-file failed'}")
+        return failures, warnings
+
+    rc, _, _ = run_command(["git", "merge-base", "--is-ancestor", base_commit, "HEAD"])
+    if rc != 0:
+        failures.append(
+            f"Contract base commit '{base_commit}' is not an ancestor of HEAD. Mark contract stale and re-approve."
+        )
+        return failures, warnings
+
+    if max_commits > 0:
+        rc, out, err = run_command(["git", "rev-list", "--count", f"{base_commit}..HEAD"])
+        if rc != 0:
+            warnings.append(f"Unable to measure commits since contract base '{base_commit}': {err or out}")
+            return failures, warnings
+        try:
+            distance = int(out.strip())
+        except ValueError:
+            warnings.append(f"Unexpected commit distance output for contract base '{base_commit}': {out}")
+            return failures, warnings
+        if distance > max_commits:
+            failures.append(
+                f"Contract is stale: {distance} commits since base '{base_commit}' exceeds allowed {max_commits}."
+            )
+    return failures, warnings
+
+
+def check_contract_lifecycle_rules(
+    changed_files: set[str],
+    policy: dict[str, Any],
+    warnings: list[str] | None = None,
+    run_mode: str = "ci",
+) -> list[str]:
+    cfg = contract_rule_config(policy)
+    if not cfg.get("enabled", False):
+        return []
+    if run_mode == "think":
+        return []
+
+    targets = contract_target_paths(changed_files, policy)
+    if not targets:
+        return []
+
+    contract_path_raw = cfg.get("contract_path", ".control-loop/contracts.json")
+    contract_path = Path(contract_path_raw)
+    if not contract_path.is_absolute():
+        contract_path = Path.cwd() / contract_path
+
+    data, load_failures = load_contracts_file(contract_path)
+    failures: list[str] = list(load_failures)
+    if data is None:
+        return failures
+
+    contracts, contract_failures = normalize_contract_list(data.get("contracts"), contract_path)
+    failures.extend(contract_failures)
+    if not contracts:
+        failures.append(f"No contracts defined in {contract_path.as_posix()} for controlled changes.")
+        return failures
+
+    id_pattern = cfg.get("id_pattern", r"^CT-\d{3}$")
+    allowed_statuses = {item.lower() for item in cfg.get("allowed_statuses", ["active"])}
+    active_statuses = {item.lower() for item in cfg.get("active_statuses", ["active"])}
+    approval_flag_field = cfg.get("approval_flag_field", "approved")
+    approval_actor_field = cfg.get("approval_actor_field", "approved_by")
+    backlog_field = cfg.get("backlog_item_id_field", "backlog_item_id")
+    base_commit_field = cfg.get("base_commit_field", "base_commit")
+    include_field = cfg.get("include_paths_field", "include_paths")
+    exclude_field = cfg.get("exclude_paths_field", "exclude_paths")
+    require_backlog_link = bool(cfg.get("require_backlog_item_link", True))
+    require_approval = bool(cfg.get("require_approval", True))
+    require_base_validation = bool(cfg.get("require_base_commit_validation", True))
+    max_commits = int(cfg.get("max_commits_since_base", 0))
+
+    try:
+        contract_id_regex = re.compile(id_pattern)
+    except re.error as exc:
+        return [f"Invalid contract id regex in policy: {exc}"]
+
+    active: list[dict[str, Any]] = []
+    for idx, item in enumerate(contracts):
+        label = f"contracts[{idx}]"
+        contract_id = str(item.get("id", "")).strip()
+        status = str(item.get("status", "")).strip().lower()
+
+        if not contract_id_regex.match(contract_id):
+            failures.append(f"{label} has invalid contract id '{contract_id}'.")
+        if status not in allowed_statuses:
+            failures.append(f"{label} has invalid status '{status}'.")
+            continue
+        if status in active_statuses:
+            active.append(item)
+
+    if len(active) != 1:
+        failures.append(
+            f"Contract lifecycle requires exactly one active contract for controlled changes; found {len(active)}."
+        )
+        return failures
+
+    contract = active[0]
+    contract_id = str(contract.get("id", "UNKNOWN"))
+
+    if require_approval:
+        approved_value = contract.get(approval_flag_field)
+        if not isinstance(approved_value, bool) or not approved_value:
+            failures.append(f"Active contract {contract_id} must set {approval_flag_field}=true.")
+        approved_by = contract.get(approval_actor_field, "")
+        if not isinstance(approved_by, str) or not approved_by.strip():
+            failures.append(f"Active contract {contract_id} must include non-empty {approval_actor_field}.")
+
+    if require_backlog_link:
+        backlog_id = contract.get(backlog_field, "")
+        if not isinstance(backlog_id, str) or not re.match(r"^BL-\d{3}$", backlog_id.strip()):
+            failures.append(f"Active contract {contract_id} must include valid {backlog_field} (BL-###).")
+
+    include_paths = contract.get(include_field, [])
+    exclude_paths = contract.get(exclude_field, [])
+    if not isinstance(include_paths, list) or not include_paths or any(not isinstance(item, str) for item in include_paths):
+        failures.append(f"Active contract {contract_id} must include non-empty string list field: {include_field}.")
+        include_paths = []
+    if not isinstance(exclude_paths, list) or any(not isinstance(item, str) for item in exclude_paths):
+        failures.append(f"Active contract {contract_id} field {exclude_field} must be a string list.")
+        exclude_paths = []
+
+    for path in targets:
+        if include_paths and not path_matches_any(path, include_paths):
+            failures.append(f"Path {path} is outside active contract {contract_id} include scope.")
+        if exclude_paths and path_matches_any(path, exclude_paths):
+            failures.append(f"Path {path} is explicitly excluded by active contract {contract_id}.")
+
+    if require_base_validation:
+        base_commit = contract.get(base_commit_field, "")
+        if not isinstance(base_commit, str) or not base_commit.strip():
+            failures.append(f"Active contract {contract_id} must include non-empty {base_commit_field}.")
+        else:
+            base_failures, base_warnings = check_contract_base_staleness(base_commit.strip(), max_commits)
+            failures.extend(base_failures)
+            if warnings is not None:
+                warnings.extend(base_warnings)
+
+    return failures
+
+
 def evaluate_change_coupling(
     changed_files: set[str],
     policy: dict[str, Any] | None = None,
@@ -652,6 +859,8 @@ def evaluate_change_coupling(
         failures.extend(check_session_sections(session_files, policy))
 
     failures.extend(check_phase_scope_rules(changed_files, session_files, policy, run_mode))
+
+    failures.extend(check_contract_lifecycle_rules(changed_files, policy, warnings, run_mode))
 
     if run_mode != "think":
         failures.extend(check_static_guard_rules(changed_files, policy, warnings, manual_reviews))

@@ -3,10 +3,14 @@
 This roadmap maps backlog IDs to delivery lanes.
 
 ## Now
-- BL-001 Control cockpit foundation for roadmap and dashboard tracking
+- BL-002 Contract lifecycle state machine for execution gating
+- BL-004 Protect toolkit master branch with required CI and pull request flow
 
 ## Next
-- BL-002 Contract lifecycle state machine for execution gating
+- BL-005 Release hygiene: align tags with versioned releases and checklist
+- BL-006 Automate SP-003 metric collection for issue-to-validated cycle time
+- BL-007 Single-file AI entrypoint contract via toolkit AGENTS.md and required read order
+- BL-008 CI guard for onboarding docs completeness and consistency
 
 ## Later
 - BL-003 AI capability levels and multi-agent coordination plan

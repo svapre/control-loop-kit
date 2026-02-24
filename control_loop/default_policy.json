@@ -194,6 +194,61 @@
         "tooling/control-loop-kit"
       ]
     },
+    "contract_lifecycle_rules": {
+      "enabled": false,
+      "contract_path": ".control-loop/contracts.json",
+      "id_pattern": "^CT-\\d{3}$",
+      "allowed_statuses": [
+        "draft",
+        "approved",
+        "active",
+        "validated",
+        "completed",
+        "blocked",
+        "stale",
+        "cancelled"
+      ],
+      "active_statuses": [
+        "active"
+      ],
+      "approval_flag_field": "approved",
+      "approval_actor_field": "approved_by",
+      "backlog_item_id_field": "backlog_item_id",
+      "base_commit_field": "base_commit",
+      "include_paths_field": "include_paths",
+      "exclude_paths_field": "exclude_paths",
+      "require_backlog_item_link": true,
+      "require_approval": true,
+      "require_base_commit_validation": true,
+      "max_commits_since_base": 60,
+      "enforce_prefixes": [
+        "core/",
+        "data_models/",
+        "utils/",
+        "scripts/",
+        "control_loop/",
+        "tests/",
+        "contracts/",
+        ".github/workflows/",
+        "tooling/control-loop-kit/"
+      ],
+      "enforce_files": [
+        "main.py"
+      ],
+      "ignore_prefixes": [
+        "docs/"
+      ],
+      "ignore_files": [
+        "README.md",
+        "CHANGELOG.md",
+        "pyproject.toml",
+        "requirements-dev.txt",
+        ".control-loop/backlog.json",
+        ".control-loop/setpoints.json",
+        "docs/ROADMAP.md",
+        "docs/CONTROL_DASHBOARD.md"
+      ]
+    },
     "design_principle_rules": {
       "null_tokens": [
         "",
@@ -274,7 +329,8 @@
       "required_for_files": [
         "main.py",
         ".control-loop/policy.json",
-        ".control-loop/ai_settings.json"
+        ".control-loop/ai_settings.json",
+        ".control-loop/contracts.json"
       ],
       "required_sections": [
         "## Request",

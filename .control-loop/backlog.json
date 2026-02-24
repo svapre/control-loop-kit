@@ -9,7 +9,7 @@
       "id": "BL-001",
       "title": "Control cockpit foundation for roadmap and dashboard tracking",
       "type": "future_plan",
-      "status": "active",
+      "status": "closed",
       "roadmap_lane": "now",
       "linked_setpoints": [
         "SP-001",
@@ -22,7 +22,7 @@
       "effort": "medium",
       "priority_score": 167,
       "owner_role": "thinking_ai",
-      "next_action": "Implement backlog/setpoint validators, dashboard renderer, and CI checks.",
+      "next_action": "No action. Completed in v0.6.0 and closed.",
       "acceptance_checks": [
         "python scripts/validate_backlog.py --check",
         "python scripts/render_dashboard.py --check",
@@ -36,8 +36,8 @@
       "id": "BL-002",
       "title": "Contract lifecycle state machine for execution gating",
       "type": "future_plan",
-      "status": "planned",
-      "roadmap_lane": "next",
+      "status": "active",
+      "roadmap_lane": "now",
       "linked_setpoints": [
         "SP-002",
         "SP-003"
@@ -51,6 +51,124 @@
       "next_action": "Define contract schema and enforce active-contract scope in process guard.",
       "acceptance_checks": [
         "python scripts/process_guard.py --mode ci",
+        "python -m pytest -q"
+      ],
+      "created_on": "2026-02-24",
+      "updated_on": "2026-02-24"
+    },
+    {
+      "id": "BL-004",
+      "title": "Protect toolkit master branch with required CI and pull request flow",
+      "type": "issue",
+      "status": "planned",
+      "roadmap_lane": "now",
+      "linked_setpoints": [
+        "SP-001",
+        "SP-002"
+      ],
+      "is_blocker": true,
+      "expected_error_reduction": "high",
+      "confidence": "high",
+      "effort": "medium",
+      "priority_score": 167,
+      "owner_role": "controller",
+      "next_action": "Enable branch protection policy for master with required verify check and PR-only merges.",
+      "acceptance_checks": [
+        "gh api repos/svapre/control-loop-kit/branches/master/protection",
+        "python -m pytest -q"
+      ],
+      "created_on": "2026-02-24",
+      "updated_on": "2026-02-24"
+    },
+    {
+      "id": "BL-005",
+      "title": "Release hygiene: align tags with versioned releases and checklist",
+      "type": "issue",
+      "status": "planned",
+      "roadmap_lane": "next",
+      "linked_setpoints": [
+        "SP-001"
+      ],
+      "is_blocker": false,
+      "expected_error_reduction": "medium",
+      "confidence": "high",
+      "effort": "medium",
+      "priority_score": 50,
+      "owner_role": "controller",
+      "next_action": "Create release checklist and publish version tags for post-v0.3.0 releases.",
+      "acceptance_checks": [
+        "git tag --list",
+        "python -m pytest -q"
+      ],
+      "created_on": "2026-02-24",
+      "updated_on": "2026-02-24"
+    },
+    {
+      "id": "BL-006",
+      "title": "Automate SP-003 metric collection for issue-to-validated cycle time",
+      "type": "future_plan",
+      "status": "planned",
+      "roadmap_lane": "next",
+      "linked_setpoints": [
+        "SP-003"
+      ],
+      "is_blocker": false,
+      "expected_error_reduction": "medium",
+      "confidence": "medium",
+      "effort": "medium",
+      "priority_score": 30,
+      "owner_role": "thinking_ai",
+      "next_action": "Add metric collector script and keep setpoint current_value synchronized from evidence.",
+      "acceptance_checks": [
+        "python scripts/validate_backlog.py --check",
+        "python -m pytest -q"
+      ],
+      "created_on": "2026-02-24",
+      "updated_on": "2026-02-24"
+    },
+    {
+      "id": "BL-007",
+      "title": "Single-file AI entrypoint contract via toolkit AGENTS.md and required read order",
+      "type": "issue",
+      "status": "planned",
+      "roadmap_lane": "next",
+      "linked_setpoints": [
+        "SP-001",
+        "SP-002"
+      ],
+      "is_blocker": false,
+      "expected_error_reduction": "high",
+      "confidence": "high",
+      "effort": "medium",
+      "priority_score": 83,
+      "owner_role": "controller",
+      "next_action": "Add toolkit-level AGENTS.md with canonical document order for any AI session.",
+      "acceptance_checks": [
+        "python scripts/validate_backlog.py --check",
+        "python -m pytest -q"
+      ],
+      "created_on": "2026-02-24",
+      "updated_on": "2026-02-24"
+    },
+    {
+      "id": "BL-008",
+      "title": "CI guard for onboarding docs completeness and consistency",
+      "type": "issue",
+      "status": "planned",
+      "roadmap_lane": "next",
+      "linked_setpoints": [
+        "SP-001",
+        "SP-002"
+      ],
+      "is_blocker": false,
+      "expected_error_reduction": "high",
+      "confidence": "medium",
+      "effort": "medium",
+      "priority_score": 50,
+      "owner_role": "controller",
+      "next_action": "Add machine check that AGENTS.md, guide docs, and roadmap references stay in sync.",
+      "acceptance_checks": [
+        "python scripts/validate_backlog.py --check",
         "python -m pytest -q"
       ],
       "created_on": "2026-02-24",

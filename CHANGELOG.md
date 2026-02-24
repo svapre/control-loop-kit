@@ -1,5 +1,25 @@
 # Changelog
 
+## v0.6.1
+- Added contract lifecycle artifact:
+  - `.control-loop/contracts.json` baseline contract file for execution gating workflows.
+- Added process-guard contract lifecycle enforcement (policy-driven, optional):
+  - active-contract requirement for controlled implementation paths,
+  - scope checks (`include_paths` / `exclude_paths`),
+  - approval evidence checks,
+  - backlog-link checks,
+  - stale contract checks from base-commit ancestry and commit-distance threshold.
+- Added policy schema/validation for:
+  - `process_guard.contract_lifecycle_rules`.
+- Updated tracker state and roadmap priorities:
+  - closed BL-001,
+  - activated BL-002,
+  - added BL-004 (branch protection), BL-005 (release hygiene), BL-006 (SP-003 metric automation),
+  - regenerated `docs/CONTROL_DASHBOARD.md`.
+- Added tests for contract lifecycle behavior and policy validation:
+  - `tests/test_process_guard_contract.py`
+  - `tests/test_policy_contract.py`
+
 ## v0.6.0
 - Added control cockpit source files:
   - `.control-loop/setpoints.json` for measurable target outputs.

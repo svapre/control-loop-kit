@@ -44,10 +44,14 @@ Reusable process-control toolkit for AI-assisted software projects.
     - setpoints file defines measurable targets,
     - backlog file tracks issues/suggestions/plans with machine-computed priority score,
     - roadmap and generated dashboard keep state visible for humans and agents.
+13. Contract lifecycle execution gating:
+    - optional active-contract checks for controlled implementation paths,
+    - scope, approval, backlog-link, and stale-base validation from policy.
 
 ## Control cockpit files
 - `.control-loop/setpoints.json`
 - `.control-loop/backlog.json`
+- `.control-loop/contracts.json`
 - `docs/ROADMAP.md`
 - `docs/CONTROL_DASHBOARD.md`
 
