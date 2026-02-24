@@ -41,6 +41,7 @@ This document defines the expected shape of `.control-loop/policy.json`.
 - `required_proposal_fields`: array of marker strings
 - `process_guideline_fields`: process markers (how work should be executed)
 - `project_guideline_fields`: project quality markers (what output quality is required)
+- `execution_phase_rules`: session-based phase/scope controls for `think` vs `implement` execution
 - `default_branch`: string (for merge-base and diff baseline)
 - session checks are controlled via `ai_settings.session_log`
 - `design_principle_rules`: proposal field-value enforcement with per-rule severity (`strict` / `warn` / `manual_review`)
@@ -65,6 +66,20 @@ This document defines the expected shape of `.control-loop/policy.json`.
 }
 ```
 
+### Execution phase rule profile
+```json
+"execution_phase_rules": {
+  "enabled": true,
+  "phase_field": "- Workflow phase:",
+  "change_scope_field": "- Change scope:",
+  "implementation_approval_token_field": "- Implementation approval token:",
+  "required_implementation_approval_token": "APPROVE_IMPLEMENT",
+  "allowed_phases": ["think", "implement"],
+  "allowed_scopes": ["project", "toolkit", "both"],
+  "toolkit_prefixes": ["tooling/control-loop-kit"]
+}
+```
+
 ### Design principle rule profile
 ```json
 "design_principle_rules": {
@@ -72,7 +87,7 @@ This document defines the expected shape of `.control-loop/policy.json`.
   "manual_review_evidence_field": "- Manual review evidence:",
   "required_value_rules": [
     {"field": "- Generality scope:", "enforcement": "strict"},
-    {"field": "- Single-document special case:", "enforcement": "manual_review"}
+    {"field": "- Single-case exception:", "enforcement": "manual_review"}
   ]
 }
 ```

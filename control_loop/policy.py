@@ -139,6 +139,22 @@ def validate_process_guard_policy(process_policy: dict[str, Any], context: str) 
     if no_assumption_rule is not None and not isinstance(no_assumption_rule, dict):
         raise ValueError(f"{context}.process_guard.no_assumption_rule must be an object")
 
+    phase_rules = process_policy.get("execution_phase_rules")
+    if phase_rules is not None:
+        if not isinstance(phase_rules, dict):
+            raise ValueError(f"{context}.process_guard.execution_phase_rules must be an object")
+        _assert_list_of_strings(phase_rules, "allowed_phases", f"{context}.process_guard.execution_phase_rules")
+        _assert_list_of_strings(phase_rules, "allowed_scopes", f"{context}.process_guard.execution_phase_rules")
+        _assert_list_of_strings(phase_rules, "toolkit_prefixes", f"{context}.process_guard.execution_phase_rules")
+        for key in [
+            "phase_field",
+            "change_scope_field",
+            "implementation_approval_token_field",
+            "required_implementation_approval_token",
+        ]:
+            if key in phase_rules and not isinstance(phase_rules[key], str):
+                raise ValueError(f"{context}.process_guard.execution_phase_rules.{key} must be a string")
+
     design_rules = process_policy.get("design_principle_rules")
     if design_rules is not None:
         if not isinstance(design_rules, dict):

@@ -48,6 +48,10 @@ def static_rule_config(policy: dict[str, Any]) -> dict[str, Any]:
     return process_policy(policy).get("static_guard_rules", {})
 
 
+def phase_rule_config(policy: dict[str, Any]) -> dict[str, Any]:
+    return process_policy(policy).get("execution_phase_rules", {})
+
+
 def process_enforcement_state(policy: dict[str, Any]) -> tuple[bool, str]:
     switch = ai_global_switch(policy)
     enabled = bool(switch.get("enabled", True))
@@ -144,6 +148,12 @@ def is_implementation_path(path: str, policy: dict[str, Any]) -> bool:
     exact_files = set(process_policy(policy).get("implementation_files", []))
     prefixes = tuple(process_policy(policy).get("implementation_prefixes", []))
     return path in exact_files or any(path.startswith(prefix) for prefix in prefixes)
+
+
+def is_toolkit_path(path: str, policy: dict[str, Any]) -> bool:
+    cfg = phase_rule_config(policy)
+    prefixes = tuple(cfg.get("toolkit_prefixes", ["tooling/control-loop-kit"]))
+    return any(path == prefix or path.startswith(f"{prefix}/") for prefix in prefixes)
 
 
 def is_session_trigger_path(path: str, policy: dict[str, Any]) -> bool:
@@ -494,11 +504,100 @@ def check_static_guard_rules(
     return failures
 
 
+def resolve_primary_session_file(session_files: list[str]) -> Path | None:
+    if not session_files:
+        return None
+    return Path(sorted(session_files)[-1])
+
+
+def check_phase_scope_rules(
+    changed_files: set[str],
+    session_files: list[str],
+    policy: dict[str, Any],
+    run_mode: str,
+) -> list[str]:
+    cfg = phase_rule_config(policy)
+    if not cfg.get("enabled", False):
+        return []
+
+    failures: list[str] = []
+    implementation_changed = any(is_implementation_path(path, policy) for path in changed_files)
+    toolkit_changed = any(is_toolkit_path(path, policy) for path in changed_files)
+    if not implementation_changed and not toolkit_changed:
+        return failures
+
+    phase_field = cfg.get("phase_field", "- Workflow phase:")
+    scope_field = cfg.get("change_scope_field", "- Change scope:")
+    token_field = cfg.get("implementation_approval_token_field", "- Implementation approval token:")
+    required_token = cfg.get("required_implementation_approval_token", "APPROVE_IMPLEMENT")
+    allowed_phases = {item.lower() for item in cfg.get("allowed_phases", ["think", "implement"])}
+    allowed_scopes = {item.lower() for item in cfg.get("allowed_scopes", ["project", "toolkit", "both"])}
+
+    primary_session = resolve_primary_session_file(session_files)
+    if primary_session is None:
+        failures.append("Implementation/toolkit changes require a session log update.")
+        return failures
+    if not primary_session.exists():
+        failures.append(f"Primary session file not found: {primary_session.as_posix()}")
+        return failures
+
+    text = primary_session.read_text(encoding="utf-8")
+    phase = get_marker_value(text, phase_field).lower()
+    scope = get_marker_value(text, scope_field).lower()
+    token = get_marker_value(text, token_field)
+
+    if phase not in allowed_phases:
+        failures.append(
+            f"Session {primary_session.as_posix()} has invalid phase '{phase}'. "
+            f"Expected one of {sorted(allowed_phases)}."
+        )
+        return failures
+
+    if run_mode == "think":
+        if phase != "think":
+            failures.append(
+                f"Session {primary_session.as_posix()} must declare think phase when running --mode think."
+            )
+        failures.append(
+            "Think mode detected implementation/toolkit changes. "
+            "Use planning/docs only in think mode, or switch to implement phase."
+        )
+        return failures
+
+    if phase != "implement":
+        failures.append(
+            f"Session {primary_session.as_posix()} must declare implement phase for implementation/toolkit changes."
+        )
+    if token != required_token:
+        failures.append(
+            f"Session {primary_session.as_posix()} is missing required implementation approval token in {token_field}"
+        )
+
+    if scope not in allowed_scopes:
+        failures.append(
+            f"Session {primary_session.as_posix()} has invalid scope '{scope}'. "
+            f"Expected one of {sorted(allowed_scopes)}."
+        )
+        return failures
+
+    if implementation_changed and scope not in {"project", "both"}:
+        failures.append(
+            f"Session {primary_session.as_posix()} scope '{scope}' is invalid for project implementation changes."
+        )
+    if toolkit_changed and scope not in {"toolkit", "both"}:
+        failures.append(
+            f"Session {primary_session.as_posix()} scope '{scope}' is invalid for toolkit changes."
+        )
+
+    return failures
+
+
 def evaluate_change_coupling(
     changed_files: set[str],
     policy: dict[str, Any] | None = None,
     warnings: list[str] | None = None,
     manual_reviews: list[str] | None = None,
+    run_mode: str = "ci",
 ) -> list[str]:
     if policy is None:
         policy = load_policy()
@@ -552,14 +651,17 @@ def evaluate_change_coupling(
     if session_files:
         failures.extend(check_session_sections(session_files, policy))
 
-    failures.extend(check_static_guard_rules(changed_files, policy, warnings, manual_reviews))
+    failures.extend(check_phase_scope_rules(changed_files, session_files, policy, run_mode))
+
+    if run_mode != "think":
+        failures.extend(check_static_guard_rules(changed_files, policy, warnings, manual_reviews))
 
     return failures
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Validate process-governance rules")
-    parser.add_argument("--mode", choices=["ci"], default="ci")
+    parser.add_argument("--mode", choices=["ci", "think"], default="ci")
     parser.add_argument("--base-sha", default=None, help="Base SHA for changed-file coupling checks")
     parser.add_argument("--policy", default=None, help="Path to policy JSON override")
     args = parser.parse_args()
@@ -577,7 +679,7 @@ def main() -> int:
     changed_files, diff_warnings = get_changed_files(args.base_sha, policy)
     warnings.extend(diff_warnings)
     if changed_files:
-        failures.extend(evaluate_change_coupling(changed_files, policy, warnings, manual_reviews))
+        failures.extend(evaluate_change_coupling(changed_files, policy, warnings, manual_reviews, args.mode))
 
     for warning in warnings:
         print(f"WARN: {warning}")
@@ -600,7 +702,7 @@ def main() -> int:
             print(f"FAIL: {item}")
         return 1
 
-    print("PASS: process guard checks passed")
+    print(f"PASS: process guard checks passed for mode={args.mode}")
     return 0
 
 

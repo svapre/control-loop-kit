@@ -34,10 +34,13 @@ Reusable process-control toolkit for AI-assisted software projects.
    - generated prompt: `contracts/MODEL_CATALOG_PROMPT.md`
    - sync check: `python scripts/generate_model_catalog_prompt.py --check`
 10. Design robustness guardrails:
-   - proposal evidence checks for generality/no-hardcoding claims,
-   - per-rule severity (`strict`, `warn`, `manual_review`),
-   - static scans for obvious hardcoding/overfitting signals in changed code.
+    - proposal evidence checks for generality/no-hardcoding claims,
+    - per-rule severity (`strict`, `warn`, `manual_review`),
+    - static scans for obvious hardcoding/overfitting signals in changed code.
+11. Phase and scope execution checks:
+    - session markers enforce `think` vs `implement` workflow boundaries,
+    - implementation changes require explicit approval token evidence.
 
 ## Current release
-- `v0.5.0` (design robustness guardrails + static hardcoding checks)
+- `v0.5.1` (generic defaults + phase/scope execution controls)
 

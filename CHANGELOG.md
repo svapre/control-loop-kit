@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.5.1
+- Re-based toolkit defaults to stay project-agnostic:
+  - generic proposal field markers (`Validation coverage evidence`, `Single-case exception`),
+  - removed PDF-project-specific defaults from toolkit policy.
+- Added execution-phase governance controls in process guard:
+  - session markers for workflow phase, change scope, and implementation approval token,
+  - `--mode think` enforcement to block implementation/toolkit code edits in think-only runs.
+- Extended policy validation to include `process_guard.execution_phase_rules`.
+- Updated toolkit docs and session template for phase/scope/token markers.
+- Added policy contract test to prevent project-specific marker regressions in toolkit defaults.
+
 ## v0.5.0
 - Added policy-driven design robustness checks in `process_guard`:
   - design principle value checks with per-rule severity (`strict`, `warn`, `manual_review`),

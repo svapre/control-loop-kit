@@ -112,3 +112,13 @@ def test_disabling_global_switch_requires_waiver_when_required(tmp_path: Path):
     with pytest.raises(ValueError, match="waiver"):
         load_policy(repo_root=tmp_path)
 
+
+def test_default_policy_remains_project_agnostic():
+    policy = load_policy()
+    project_fields = policy["process_guard"]["project_guideline_fields"]
+
+    assert "- Validation coverage evidence:" in project_fields
+    assert "- Single-case exception:" in project_fields
+    assert "- Corpus coverage evidence:" not in project_fields
+    assert "- Single-document special case:" not in project_fields
+

@@ -28,6 +28,7 @@ The toolkit provides two executable gates:
 - enforces ambiguity stop rule (assumptions need confirmation evidence)
 - enforces process-vs-project guideline markers from policy
 - enforces session evidence requirements when configured
+- enforces execution phase and scope markers (think/implement, project/toolkit)
 - enforces design-principle evidence with per-rule severity (`strict`, `warn`, `manual_review`)
 - runs static guard scans for hardcoding/overfitting signals when configured
 
@@ -75,7 +76,7 @@ Follow these steps in target repository.
 ```powershell
 git submodule add https://github.com/svapre/control-loop-kit.git tooling/control-loop-kit
 git -C tooling/control-loop-kit fetch --tags
-git -C tooling/control-loop-kit checkout v0.4.0
+git -C tooling/control-loop-kit checkout v0.5.1
 ```
 
 ### Step 2: Add local wrappers

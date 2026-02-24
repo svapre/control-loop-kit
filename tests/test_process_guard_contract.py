@@ -50,9 +50,9 @@ def test_implementation_change_passes_with_proposal_design_and_session(tmp_path,
                 "- Configuration over hardcoding:",
                 "- Config externalization evidence: values loaded from config files",
                 "- Generality scope: chaptered textbooks and policy documents",
-                "- Corpus coverage evidence: validated on three representative PDFs",
+                "- Validation coverage evidence: validated on three representative documents",
                 "- Holdout validation evidence: one unseen PDF validated without failures",
-                "- Single-document special case: NONE",
+                "- Single-case exception: NONE",
                 "- Manual review evidence: N/A",
                 "- Determinism evidence: repeated run produced same output hash",
                 "- Idempotent processing:",
@@ -105,6 +105,9 @@ def test_implementation_change_passes_with_proposal_design_and_session(tmp_path,
                 "## Planned Actions",
                 "- Files planned to change: core/profiler.py",
                 "- Why these changes: improve enforcement",
+                "- Workflow phase: implement",
+                "- Change scope: project",
+                "- Implementation approval token: APPROVE_IMPLEMENT",
                 "## User Approval",
                 "- User approval status: yes",
                 "- User approval evidence: user said go ahead",
@@ -138,6 +141,23 @@ def test_implementation_change_passes_with_proposal_design_and_session(tmp_path,
 def test_static_guard_detects_absolute_path_literal_as_failure(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     policy = load_policy(repo_root=tmp_path)
+    static_cfg = policy.setdefault("process_guard", {}).setdefault("static_guard_rules", {})
+    static_cfg.update(
+        {
+            "enabled": True,
+            "scan_extensions": [".py"],
+            "include_prefixes": ["core/"],
+            "include_files": ["main.py"],
+            "rules": [
+                {
+                    "name": "absolute-path-literal",
+                    "pattern": r"[A-Za-z]:\\\\",
+                    "message": "absolute path literal detected; use config inputs instead",
+                    "enforcement": "strict",
+                }
+            ],
+        }
+    )
 
     core_file = Path("core/profiler.py")
     core_file.parent.mkdir(parents=True, exist_ok=True)
@@ -151,6 +171,19 @@ def test_static_guard_detects_absolute_path_literal_as_failure(tmp_path, monkeyp
 def test_special_case_requires_manual_review_evidence(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     policy = load_policy(repo_root=tmp_path)
+    design_cfg = policy.setdefault("process_guard", {}).setdefault("design_principle_rules", {})
+    design_cfg.update(
+        {
+            "null_tokens": ["", "none", "n/a", "na", "tbd", "todo"],
+            "manual_review_evidence_field": "- Manual review evidence:",
+            "required_value_rules": [
+                {
+                    "field": "- Single-case exception:",
+                    "enforcement": "manual_review",
+                }
+            ],
+        }
+    )
 
     proposal = Path("docs/proposals/2026-02-24-special-case.md")
     proposal.parent.mkdir(parents=True, exist_ok=True)
@@ -171,9 +204,9 @@ def test_special_case_requires_manual_review_evidence(tmp_path, monkeypatch):
                 "- Configuration over hardcoding: config-based thresholds",
                 "- Config externalization evidence: rules loaded from config",
                 "- Generality scope: intended for chaptered PDFs",
-                "- Corpus coverage evidence: validated on three samples",
+                "- Validation coverage evidence: validated on three samples",
                 "- Holdout validation evidence: one unseen sample passes",
-                "- Single-document special case: hardcoded vendor header fallback",
+                "- Single-case exception: hardcoded vendor header fallback",
                 "- Manual review evidence: N/A",
                 "- Determinism evidence: output hash stable",
                 "- Idempotent processing: re-run safe",
@@ -223,6 +256,9 @@ def test_special_case_requires_manual_review_evidence(tmp_path, monkeypatch):
                 "## Planned Actions",
                 "- Files planned to change: core/profiler.py",
                 "- Why these changes: compatibility fallback",
+                "- Workflow phase: implement",
+                "- Change scope: project",
+                "- Implementation approval token: APPROVE_IMPLEMENT",
                 "## User Approval",
                 "- User approval status: yes",
                 "- User approval evidence: approved for experiment",

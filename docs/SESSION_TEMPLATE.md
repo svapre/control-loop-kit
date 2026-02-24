@@ -8,6 +8,9 @@
 ## Planned Actions
 - Files planned to change:
 - Why these changes:
+- Workflow phase:
+- Change scope:
+- Implementation approval token:
 
 ## User Approval
 - User approval status:

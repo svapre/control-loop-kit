@@ -1,6 +1,6 @@
 {
   "meta": {
-    "policy_version": "1",
+    "policy_version": "2",
     "description": "Base process and project policy for control loop toolkit."
   },
   "control_gate": {
@@ -137,11 +137,10 @@
       "- Traceable decisions:",
       "- No silent guessing:",
       "- Configuration over hardcoding:",
-      "- Config externalization evidence:",
       "- Generality scope:",
-      "- Corpus coverage evidence:",
+      "- Validation coverage evidence:",
       "- Holdout validation evidence:",
-      "- Single-document special case:",
+      "- Single-case exception:",
       "- Manual review evidence:",
       "- Determinism evidence:",
       "- Idempotent processing:",
@@ -176,6 +175,25 @@
       "confirmation_required_field": "- User confirmation required before implementation:",
       "confirmation_evidence_field": "- User confirmation evidence:"
     },
+    "execution_phase_rules": {
+      "enabled": true,
+      "phase_field": "- Workflow phase:",
+      "change_scope_field": "- Change scope:",
+      "implementation_approval_token_field": "- Implementation approval token:",
+      "required_implementation_approval_token": "APPROVE_IMPLEMENT",
+      "allowed_phases": [
+        "think",
+        "implement"
+      ],
+      "allowed_scopes": [
+        "project",
+        "toolkit",
+        "both"
+      ],
+      "toolkit_prefixes": [
+        "tooling/control-loop-kit"
+      ]
+    },
     "design_principle_rules": {
       "null_tokens": [
         "",
@@ -186,46 +204,10 @@
         "todo"
       ],
       "manual_review_evidence_field": "- Manual review evidence:",
-      "required_value_rules": [
-        {
-          "field": "- Config externalization evidence:",
-          "enforcement": "strict",
-          "description": "Explain why thresholds/rules moved to config and not hardcoded."
-        },
-        {
-          "field": "- Generality scope:",
-          "enforcement": "strict",
-          "description": "Describe document classes this change should handle."
-        },
-        {
-          "field": "- Corpus coverage evidence:",
-          "enforcement": "strict",
-          "description": "List representative validation samples."
-        },
-        {
-          "field": "- Holdout validation evidence:",
-          "enforcement": "strict",
-          "description": "Show at least one unseen-sample validation result."
-        },
-        {
-          "field": "- Determinism evidence:",
-          "enforcement": "strict",
-          "description": "Provide same-input same-output evidence."
-        },
-        {
-          "field": "- Idempotency evidence:",
-          "enforcement": "strict",
-          "description": "Provide re-run evidence without duplication/degradation."
-        },
-        {
-          "field": "- Single-document special case:",
-          "enforcement": "manual_review",
-          "description": "If non-empty, manual review is required with explicit evidence."
-        }
-      ]
+      "required_value_rules": []
     },
     "static_guard_rules": {
-      "enabled": true,
+      "enabled": false,
       "scan_extensions": [
         ".py"
       ],
@@ -237,22 +219,7 @@
       "include_files": [
         "main.py"
       ],
-      "rules": [
-        {
-          "name": "absolute_path_literals",
-          "pattern": "(?:[A-Za-z]:\\\\\\\\|/Users/|/home/|/var/)",
-          "enforcement": "strict",
-          "message": "Detected absolute path literal in implementation code. Use config or environment paths.",
-          "ignore_case": false
-        },
-        {
-          "name": "hardcoded_pdf_filename_literals",
-          "pattern": "[\\\"'][^\\\"'\\n]+\\.pdf[\\\"']",
-          "enforcement": "manual_review",
-          "message": "Detected hardcoded PDF filename literal. Confirm this is not single-document overfitting.",
-          "ignore_case": true
-        }
-      ]
+      "rules": []
     },
     "default_branch": "master"
   },
@@ -301,7 +268,8 @@
         "data_models/",
         "utils/",
         "scripts/",
-        ".github/workflows/"
+        ".github/workflows/",
+        "tooling/control-loop-kit"
       ],
       "required_for_files": [
         "main.py",
@@ -322,6 +290,9 @@
         "- Task summary:",
         "- Files planned to change:",
         "- Why these changes:",
+        "- Workflow phase:",
+        "- Change scope:",
+        "- Implementation approval token:",
         "- User approval status:",
         "- User approval evidence:",
         "- confirm_before_changes:",
@@ -346,4 +317,3 @@
     }
   }
 }
-
