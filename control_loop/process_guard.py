@@ -5,69 +5,9 @@ from __future__ import annotations
 import argparse
 import subprocess
 from pathlib import Path
+from typing import Any
 
-REQUIRED_PROCESS_FILES = [
-    "GOVERNANCE.md",
-    "DESIGN.md",
-    "docs/USER_CONTEXT.md",
-    "docs/PROCESS_CHANGELOG.md",
-    "docs/proposals/README.md",
-    "docs/proposals/TEMPLATE.md",
-    ".github/pull_request_template.md",
-]
-
-IMPLEMENTATION_PREFIXES = ("core/", "data_models/", "utils/")
-IMPLEMENTATION_FILES = {"main.py"}
-
-PROCESS_CONTROLLED_FILES = {
-    "AGENTS.md",
-    "SPEC.md",
-    "SYSTEM.md",
-    "GOVERNANCE.md",
-    "DESIGN.md",
-    "docs/USER_CONTEXT.md",
-    "docs/proposals/README.md",
-    "docs/proposals/TEMPLATE.md",
-    ".github/pull_request_template.md",
-    ".github/workflows/ci.yml",
-    "scripts/control_gate.py",
-    "scripts/process_guard.py",
-}
-
-PROPOSAL_IGNORED_FILES = {
-    "docs/proposals/README.md",
-    "docs/proposals/TEMPLATE.md",
-}
-
-REQUIRED_PROPOSAL_SECTIONS = [
-    "## Problem",
-    "## Options Considered",
-    "## Design Parameter Compliance",
-    "## Exception Register",
-    "## Decision Scorecard",
-    "## Decision",
-    "## Risks and Mitigations",
-    "## Validation Plan",
-]
-
-REQUIRED_PROPOSAL_FIELDS = [
-    "- Structural correctness:",
-    "- Deterministic behavior:",
-    "- Traceable decisions:",
-    "- No silent guessing:",
-    "- Configuration over hardcoding:",
-    "- Idempotent processing:",
-    "- Fail loudly on invalid state:",
-    "- Performance budget awareness:",
-    "- Extensible module boundaries:",
-    "- Evidence-backed claims:",
-    "- Violated parameter(s):",
-    "- Why alternatives are worse:",
-    "- Risk:",
-    "- Mitigation:",
-    "- Rollback plan:",
-    "- Why this is best overall now:",
-]
+from control_loop.policy import load_policy
 
 
 def run_command(cmd: list[str]) -> tuple[int, str, str]:
@@ -75,19 +15,25 @@ def run_command(cmd: list[str]) -> tuple[int, str, str]:
     return proc.returncode, proc.stdout.strip(), proc.stderr.strip()
 
 
-def check_required_process_files() -> list[str]:
+def process_policy(policy: dict[str, Any]) -> dict[str, Any]:
+    return policy.get("process_guard", {})
+
+
+def check_required_process_files(policy: dict[str, Any]) -> list[str]:
     failures: list[str] = []
-    for file_path in REQUIRED_PROCESS_FILES:
+    required = process_policy(policy).get("required_process_files", [])
+    for file_path in required:
         if not Path(file_path).exists():
             failures.append(f"Missing process artifact: {file_path}")
     return failures
 
 
-def resolve_base_sha(base_sha: str | None) -> str | None:
+def resolve_base_sha(base_sha: str | None, policy: dict[str, Any]) -> str | None:
     if base_sha and not base_sha.startswith("000000"):
         return base_sha
 
-    rc_merge_base, out_merge_base, _ = run_command(["git", "merge-base", "HEAD", "origin/master"])
+    default_branch = process_policy(policy).get("default_branch", "master")
+    rc_merge_base, out_merge_base, _ = run_command(["git", "merge-base", "HEAD", f"origin/{default_branch}"])
     if rc_merge_base == 0 and out_merge_base:
         return out_merge_base
 
@@ -97,31 +43,8 @@ def resolve_base_sha(base_sha: str | None) -> str | None:
     return None
 
 
-def get_changed_files(base_sha: str | None) -> tuple[set[str], list[str]]:
-    warnings: list[str] = []
-    resolved = resolve_base_sha(base_sha)
-    changed: set[str] = set()
-
-    if resolved:
-        rc, out, err = run_command(["git", "diff", "--name-only", resolved, "HEAD"])
-        if rc != 0:
-            warnings.append(f"Unable to compute changed files against base SHA: {err or out}")
-        else:
-            changed.update({line.strip() for line in out.splitlines() if line.strip()})
-    else:
-        warnings.append("Could not determine base SHA for commit-diff checks; using worktree changes only.")
-
-    changed.update(get_uncommitted_files(warnings))
-    return changed, warnings
-
-
-def is_implementation_path(path: str) -> bool:
-    return path in IMPLEMENTATION_FILES or any(path.startswith(prefix) for prefix in IMPLEMENTATION_PREFIXES)
-
-
 def get_uncommitted_files(warnings: list[str]) -> set[str]:
     changed: set[str] = set()
-
     commands = [
         ["git", "diff", "--name-only"],
         ["git", "diff", "--name-only", "--cached"],
@@ -136,18 +59,104 @@ def get_uncommitted_files(warnings: list[str]) -> set[str]:
     return changed
 
 
-def get_changed_proposal_files(changed_files: set[str]) -> list[str]:
-    return sorted(
-        [
-            path
-            for path in changed_files
-            if path.startswith("docs/proposals/") and path not in PROPOSAL_IGNORED_FILES
-        ]
+def get_changed_files(base_sha: str | None, policy: dict[str, Any]) -> tuple[set[str], list[str]]:
+    warnings: list[str] = []
+    changed: set[str] = set()
+    resolved = resolve_base_sha(base_sha, policy)
+
+    if resolved:
+        rc, out, err = run_command(["git", "diff", "--name-only", resolved, "HEAD"])
+        if rc != 0:
+            warnings.append(f"Unable to compute changed files against base SHA: {err or out}")
+        else:
+            changed.update({line.strip() for line in out.splitlines() if line.strip()})
+    else:
+        warnings.append("Could not determine base SHA for commit-diff checks; using worktree changes only.")
+
+    changed.update(get_uncommitted_files(warnings))
+    return changed, warnings
+
+
+def is_implementation_path(path: str, policy: dict[str, Any]) -> bool:
+    exact_files = set(process_policy(policy).get("implementation_files", []))
+    prefixes = tuple(process_policy(policy).get("implementation_prefixes", []))
+    return path in exact_files or any(path.startswith(prefix) for prefix in prefixes)
+
+
+def get_changed_proposal_files(changed_files: set[str], policy: dict[str, Any]) -> list[str]:
+    proposal_root = process_policy(policy).get("proposal_root", "docs/proposals/")
+    ignored = set(process_policy(policy).get("proposal_ignored_files", []))
+    return sorted([path for path in changed_files if path.startswith(proposal_root) and path not in ignored])
+
+
+def get_marker_value(text: str, marker: str) -> str:
+    for line in text.splitlines():
+        if line.strip().lower().startswith(marker.lower()):
+            return line.split(":", 1)[1].strip() if ":" in line else ""
+    return ""
+
+
+def check_mode_rule(text: str, proposal_file: str, policy: dict[str, Any]) -> list[str]:
+    rule = process_policy(policy).get("mode_rule", {})
+    if not rule.get("enabled", False):
+        return []
+
+    mode_marker = rule.get("selected_mode_field", "- Selected work mode:")
+    allowed = {item.lower() for item in rule.get("allowed_modes", ["routine", "design"])}
+    selected = get_marker_value(text, mode_marker).lower()
+    if not selected:
+        return [f"Proposal {proposal_file} has empty selected mode field: {mode_marker}"]
+    if selected not in allowed:
+        return [f"Proposal {proposal_file} mode '{selected}' not allowed; expected one of {sorted(allowed)}"]
+    return []
+
+
+def check_no_assumption_rule(text: str, proposal_file: str, policy: dict[str, Any]) -> list[str]:
+    rule = process_policy(policy).get("no_assumption_rule", {})
+    if not rule.get("enabled", False):
+        return []
+
+    assumptions_marker = rule.get("assumptions_field", "- Assumptions made:")
+    confirm_required_marker = rule.get(
+        "confirmation_required_field", "- User confirmation required before implementation:"
     )
+    evidence_marker = rule.get("confirmation_evidence_field", "- User confirmation evidence:")
 
+    assumptions = get_marker_value(text, assumptions_marker)
+    confirm_required = get_marker_value(text, confirm_required_marker).lower()
+    evidence = get_marker_value(text, evidence_marker)
 
-def check_proposal_sections(proposal_files: list[str]) -> list[str]:
     failures: list[str] = []
+    if not assumptions:
+        failures.append(f"Proposal {proposal_file} has empty assumptions field: {assumptions_marker}")
+
+    assumptions_is_none = assumptions.lower() in {"none", "n/a", "na"}
+    confirmation_is_yes = confirm_required in {"yes", "true"}
+    confirmation_is_no = confirm_required in {"no", "false"}
+
+    if not confirmation_is_yes and not confirmation_is_no:
+        failures.append(
+            f"Proposal {proposal_file} must set {confirm_required_marker} to yes/no (or true/false)."
+        )
+
+    if not assumptions_is_none and not confirmation_is_yes:
+        failures.append(
+            f"Proposal {proposal_file} lists assumptions but does not require user confirmation."
+        )
+
+    if confirmation_is_yes and evidence.lower() in {"", "none", "n/a", "na"}:
+        failures.append(
+            f"Proposal {proposal_file} requires confirmation but has empty evidence marker: {evidence_marker}"
+        )
+
+    return failures
+
+
+def check_proposal_sections(proposal_files: list[str], policy: dict[str, Any]) -> list[str]:
+    failures: list[str] = []
+    required_sections = process_policy(policy).get("required_proposal_sections", [])
+    required_fields = process_policy(policy).get("required_proposal_fields", [])
+
     for path in proposal_files:
         proposal_path = Path(path)
         if not proposal_path.exists():
@@ -155,25 +164,45 @@ def check_proposal_sections(proposal_files: list[str]) -> list[str]:
             continue
 
         text = proposal_path.read_text(encoding="utf-8")
-        for section in REQUIRED_PROPOSAL_SECTIONS:
+        for section in required_sections:
             if section not in text:
                 failures.append(f"Proposal {path} missing required section: {section}")
-        for field in REQUIRED_PROPOSAL_FIELDS:
+        for field in required_fields:
             if field not in text:
                 failures.append(f"Proposal {path} missing required field marker: {field}")
+
+        failures.extend(check_mode_rule(text, path, policy))
+        failures.extend(check_no_assumption_rule(text, path, policy))
+
     return failures
 
 
-def evaluate_change_coupling(changed_files: set[str]) -> list[str]:
-    failures: list[str] = []
+def path_matches_rule(path: str, rule: str) -> bool:
+    if rule.endswith("/"):
+        return path.startswith(rule)
+    return path == rule
 
-    implementation_changed = any(is_implementation_path(path) for path in changed_files)
-    process_changed = any(path in PROCESS_CONTROLLED_FILES for path in changed_files)
-    proposal_files = get_changed_proposal_files(changed_files)
+
+def evaluate_change_coupling(changed_files: set[str], policy: dict[str, Any] | None = None) -> list[str]:
+    if policy is None:
+        policy = load_policy()
+
+    failures: list[str] = []
+    proposal_root = process_policy(policy).get("proposal_root", "docs/proposals/")
+    design_paths = process_policy(policy).get("design_update_paths", ["DESIGN.md", "docs/adr/"])
+    process_files = set(process_policy(policy).get("process_controlled_files", []))
+    process_changelog = process_policy(policy).get("process_changelog_path", "docs/PROCESS_CHANGELOG.md")
+
+    implementation_changed = any(is_implementation_path(path, policy) for path in changed_files)
+    process_changed = any(path in process_files for path in changed_files)
+    proposal_files = get_changed_proposal_files(changed_files, policy)
 
     if implementation_changed:
-        has_proposal_update = bool(proposal_files)
-        has_design_update = "DESIGN.md" in changed_files or any(path.startswith("docs/adr/") for path in changed_files)
+        has_proposal_update = bool(proposal_files) or any(
+            path.startswith(proposal_root) and path not in set(process_policy(policy).get("proposal_ignored_files", []))
+            for path in changed_files
+        )
+        has_design_update = any(any(path_matches_rule(path, rule) for rule in design_paths) for path in changed_files)
 
         if not has_proposal_update:
             failures.append(
@@ -186,14 +215,14 @@ def evaluate_change_coupling(changed_files: set[str]) -> list[str]:
                 "Record design impact before merge."
             )
 
-    if process_changed and "docs/PROCESS_CHANGELOG.md" not in changed_files:
+    if process_changed and process_changelog not in changed_files:
         failures.append(
             "Process files changed without docs/PROCESS_CHANGELOG.md update. "
             "Record what changed and why."
         )
 
     if proposal_files:
-        failures.extend(check_proposal_sections(proposal_files))
+        failures.extend(check_proposal_sections(proposal_files, policy))
 
     return failures
 
@@ -202,16 +231,18 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Validate process-governance rules")
     parser.add_argument("--mode", choices=["ci"], default="ci")
     parser.add_argument("--base-sha", default=None, help="Base SHA for changed-file coupling checks")
+    parser.add_argument("--policy", default=None, help="Path to policy JSON override")
     args = parser.parse_args()
 
+    policy = load_policy(args.policy)
     failures: list[str] = []
     warnings: list[str] = []
 
-    failures.extend(check_required_process_files())
-    changed_files, diff_warnings = get_changed_files(args.base_sha)
+    failures.extend(check_required_process_files(policy))
+    changed_files, diff_warnings = get_changed_files(args.base_sha, policy)
     warnings.extend(diff_warnings)
     if changed_files:
-        failures.extend(evaluate_change_coupling(changed_files))
+        failures.extend(evaluate_change_coupling(changed_files, policy))
 
     for warning in warnings:
         print(f"WARN: {warning}")
@@ -227,3 +258,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+

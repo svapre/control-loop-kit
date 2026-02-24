@@ -1,0 +1,153 @@
+{
+  "control_gate": {
+    "required_files": [
+      "MASTER_PLAN.md",
+      "SPEC.md",
+      "SYSTEM.md",
+      "AGENTS.md",
+      "DESIGN.md",
+      "GOVERNANCE.md",
+      "docs/USER_CONTEXT.md",
+      "docs/PROCESS_CHANGELOG.md",
+      "docs/proposals/README.md",
+      "docs/proposals/TEMPLATE.md",
+      ".github/workflows/ci.yml",
+      ".github/pull_request_template.md",
+      "pyproject.toml",
+      "requirements-dev.txt",
+      "scripts/process_guard.py"
+    ],
+    "require_tests_dir": true,
+    "master_plan_tokens": [
+      "Step 5",
+      "| 5 |"
+    ],
+    "readiness_tag": "control-system-ready",
+    "ci_workflow_name": "ci",
+    "readiness_commands": [
+      [
+        "${PYTHON}",
+        "-m",
+        "ruff",
+        "check",
+        "."
+      ],
+      [
+        "${PYTHON}",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider"
+      ],
+      [
+        "${PYTHON}",
+        "scripts/process_guard.py",
+        "--mode",
+        "ci"
+      ]
+    ]
+  },
+  "process_guard": {
+    "required_process_files": [
+      "GOVERNANCE.md",
+      "DESIGN.md",
+      "docs/USER_CONTEXT.md",
+      "docs/PROCESS_CHANGELOG.md",
+      "docs/proposals/README.md",
+      "docs/proposals/TEMPLATE.md",
+      ".github/pull_request_template.md"
+    ],
+    "implementation_prefixes": [
+      "core/",
+      "data_models/",
+      "utils/"
+    ],
+    "implementation_files": [
+      "main.py"
+    ],
+    "process_controlled_files": [
+      "AGENTS.md",
+      "SPEC.md",
+      "SYSTEM.md",
+      "GOVERNANCE.md",
+      "DESIGN.md",
+      "docs/USER_CONTEXT.md",
+      "docs/proposals/README.md",
+      "docs/proposals/TEMPLATE.md",
+      ".github/pull_request_template.md",
+      ".github/workflows/ci.yml",
+      "scripts/control_gate.py",
+      "scripts/process_guard.py"
+    ],
+    "proposal_ignored_files": [
+      "docs/proposals/README.md",
+      "docs/proposals/TEMPLATE.md"
+    ],
+    "proposal_root": "docs/proposals/",
+    "process_changelog_path": "docs/PROCESS_CHANGELOG.md",
+    "design_update_paths": [
+      "DESIGN.md",
+      "docs/adr/"
+    ],
+    "required_proposal_sections": [
+      "## Problem",
+      "## Options Considered",
+      "## Work Mode",
+      "## Design Parameter Compliance",
+      "## Exception Register",
+      "## Decision Scorecard",
+      "## Assumptions and Unknowns",
+      "## Approval Checkpoint",
+      "## Decision",
+      "## Risks and Mitigations",
+      "## Validation Plan"
+    ],
+    "required_proposal_fields": [
+      "- Selected work mode:",
+      "- Why this mode:",
+      "- Structural correctness:",
+      "- Deterministic behavior:",
+      "- Traceable decisions:",
+      "- No silent guessing:",
+      "- Configuration over hardcoding:",
+      "- Idempotent processing:",
+      "- Fail loudly on invalid state:",
+      "- Performance budget awareness:",
+      "- Extensible module boundaries:",
+      "- Evidence-backed claims:",
+      "- Violated parameter(s):",
+      "- Why alternatives are worse:",
+      "- Risk:",
+      "- Mitigation:",
+      "- Rollback plan:",
+      "- Correctness impact:",
+      "- Reliability impact:",
+      "- Complexity impact:",
+      "- Delivery speed impact:",
+      "- Operational risk:",
+      "- Why this is best overall now:",
+      "- Assumptions made:",
+      "- Unknowns:",
+      "- Clarifying questions for user:",
+      "- User confirmation required before implementation:",
+      "- User confirmation evidence:"
+    ],
+    "mode_rule": {
+      "enabled": true,
+      "selected_mode_field": "- Selected work mode:",
+      "allowed_modes": [
+        "routine",
+        "design"
+      ]
+    },
+    "no_assumption_rule": {
+      "enabled": true,
+      "assumptions_field": "- Assumptions made:",
+      "confirmation_required_field": "- User confirmation required before implementation:",
+      "confirmation_evidence_field": "- User confirmation evidence:"
+    },
+    "default_branch": "master"
+  }
+}
+
