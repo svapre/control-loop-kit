@@ -20,6 +20,9 @@ Each wrapper should:
 Create `.control-loop/policy.json` for project-specific rules.
 
 Create `.control-loop/ai_settings.json` for AI response and process-behavior settings.
+Tune design/static guard strictness in `.control-loop/policy.json` using:
+- `process_guard.design_principle_rules`
+- `process_guard.static_guard_rules`
 
 Default:
 - partial override mode

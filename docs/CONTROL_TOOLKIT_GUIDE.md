@@ -28,6 +28,8 @@ The toolkit provides two executable gates:
 - enforces ambiguity stop rule (assumptions need confirmation evidence)
 - enforces process-vs-project guideline markers from policy
 - enforces session evidence requirements when configured
+- enforces design-principle evidence with per-rule severity (`strict`, `warn`, `manual_review`)
+- runs static guard scans for hardcoding/overfitting signals when configured
 
 The toolkit also provides policy-driven AI behavior settings:
 - response style defaults

@@ -43,6 +43,8 @@ This document defines the expected shape of `.control-loop/policy.json`.
 - `project_guideline_fields`: project quality markers (what output quality is required)
 - `default_branch`: string (for merge-base and diff baseline)
 - session checks are controlled via `ai_settings.session_log`
+- `design_principle_rules`: proposal field-value enforcement with per-rule severity (`strict` / `warn` / `manual_review`)
+- `static_guard_rules`: regex-based scans for changed implementation files (for hardcoding/overfitting signals)
 
 ### Work mode rule
 ```json
@@ -60,6 +62,36 @@ This document defines the expected shape of `.control-loop/policy.json`.
   "assumptions_field": "- Assumptions made:",
   "confirmation_required_field": "- User confirmation required before implementation:",
   "confirmation_evidence_field": "- User confirmation evidence:"
+}
+```
+
+### Design principle rule profile
+```json
+"design_principle_rules": {
+  "null_tokens": ["", "none", "n/a", "na"],
+  "manual_review_evidence_field": "- Manual review evidence:",
+  "required_value_rules": [
+    {"field": "- Generality scope:", "enforcement": "strict"},
+    {"field": "- Single-document special case:", "enforcement": "manual_review"}
+  ]
+}
+```
+
+### Static guard rules
+```json
+"static_guard_rules": {
+  "enabled": true,
+  "scan_extensions": [".py"],
+  "include_prefixes": ["core/", "utils/"],
+  "include_files": ["main.py"],
+  "rules": [
+    {
+      "name": "absolute_path_literals",
+      "pattern": "(?:[A-Za-z]:\\\\\\\\|/Users/|/home/|/var/)",
+      "enforcement": "strict",
+      "message": "Detected absolute path literal in implementation code."
+    }
+  ]
 }
 ```
 

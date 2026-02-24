@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import re
 import subprocess
 from pathlib import Path
 from typing import Any
@@ -39,6 +40,14 @@ def context_policy(policy: dict[str, Any]) -> dict[str, Any]:
     return ai_policy(policy).get("context_management", {})
 
 
+def design_rule_config(policy: dict[str, Any]) -> dict[str, Any]:
+    return process_policy(policy).get("design_principle_rules", {})
+
+
+def static_rule_config(policy: dict[str, Any]) -> dict[str, Any]:
+    return process_policy(policy).get("static_guard_rules", {})
+
+
 def process_enforcement_state(policy: dict[str, Any]) -> tuple[bool, str]:
     switch = ai_global_switch(policy)
     enabled = bool(switch.get("enabled", True))
@@ -46,6 +55,28 @@ def process_enforcement_state(policy: dict[str, Any]) -> tuple[bool, str]:
     if mode not in {"strict", "advisory"}:
         mode = "strict"
     return enabled, mode
+
+
+def classify_issue(
+    enforcement: str,
+    message: str,
+    failures: list[str],
+    warnings: list[str] | None = None,
+    manual_reviews: list[str] | None = None,
+) -> None:
+    normalized = (enforcement or "strict").lower()
+    if normalized == "strict":
+        failures.append(message)
+    elif normalized == "warn":
+        if warnings is not None:
+            warnings.append(message)
+    elif normalized == "manual_review":
+        if manual_reviews is not None:
+            manual_reviews.append(message)
+        elif warnings is not None:
+            warnings.append(message)
+    else:
+        failures.append(f"Invalid enforcement level '{enforcement}' for issue: {message}")
 
 
 def check_required_process_files(policy: dict[str, Any]) -> list[str]:
@@ -122,6 +153,21 @@ def is_session_trigger_path(path: str, policy: dict[str, Any]) -> bool:
     return path in exact_files or any(path.startswith(prefix) for prefix in prefixes)
 
 
+def static_scan_target(path: str, policy: dict[str, Any]) -> bool:
+    cfg = static_rule_config(policy)
+    if not cfg.get("enabled", False):
+        return False
+
+    include_prefixes = tuple(cfg.get("include_prefixes", process_policy(policy).get("implementation_prefixes", [])))
+    include_files = set(cfg.get("include_files", process_policy(policy).get("implementation_files", [])))
+    scan_extensions = {ext.lower() for ext in cfg.get("scan_extensions", [".py"])}
+
+    if path in include_files or any(path.startswith(prefix) for prefix in include_prefixes):
+        suffix = Path(path).suffix.lower()
+        return suffix in scan_extensions
+    return False
+
+
 def get_changed_proposal_files(changed_files: set[str], policy: dict[str, Any]) -> list[str]:
     proposal_root = process_policy(policy).get("proposal_root", "docs/proposals/")
     ignored = set(process_policy(policy).get("proposal_ignored_files", []))
@@ -160,6 +206,10 @@ def get_marker_value(text: str, marker: str) -> str:
 def is_null_marker_value(value: str, policy: dict[str, Any]) -> bool:
     null_tokens = set(session_policy(policy).get("null_tokens", ["none", "n/a", "na", ""]))
     return value.strip().lower() in {token.lower() for token in null_tokens}
+
+
+def is_null_text_value(value: str, null_tokens: set[str]) -> bool:
+    return value.strip().lower() in null_tokens
 
 
 def check_mode_rule(text: str, proposal_file: str, policy: dict[str, Any]) -> list[str]:
@@ -218,7 +268,66 @@ def check_no_assumption_rule(text: str, proposal_file: str, policy: dict[str, An
     return failures
 
 
-def check_proposal_sections(proposal_files: list[str], policy: dict[str, Any]) -> list[str]:
+def check_design_principle_rules(
+    text: str,
+    proposal_file: str,
+    policy: dict[str, Any],
+    warnings: list[str] | None = None,
+    manual_reviews: list[str] | None = None,
+) -> list[str]:
+    cfg = design_rule_config(policy)
+    rules = cfg.get("required_value_rules", [])
+    null_tokens = {token.lower() for token in cfg.get("null_tokens", ["", "none", "n/a", "na", "tbd", "todo"])}
+    manual_evidence_field = cfg.get("manual_review_evidence_field", "- Manual review evidence:")
+
+    failures: list[str] = []
+    for item in rules:
+        if not isinstance(item, dict):
+            failures.append(f"Invalid design rule entry in policy: {item}")
+            continue
+
+        field = item.get("field")
+        enforcement = str(item.get("enforcement", "strict")).lower()
+        if not isinstance(field, str) or not field.strip():
+            failures.append(f"Invalid design rule field marker in policy entry: {item}")
+            continue
+
+        value = get_marker_value(text, field)
+        is_null = is_null_text_value(value, null_tokens)
+
+        if enforcement in {"strict", "warn"} and is_null:
+            classify_issue(
+                enforcement,
+                f"Proposal {proposal_file} has empty design evidence field: {field}",
+                failures,
+                warnings,
+                manual_reviews,
+            )
+            continue
+
+        if enforcement == "manual_review" and not is_null:
+            classify_issue(
+                "manual_review",
+                f"Proposal {proposal_file} includes special-case evidence in {field}; manual review required.",
+                failures,
+                warnings,
+                manual_reviews,
+            )
+            evidence = get_marker_value(text, manual_evidence_field)
+            if is_null_text_value(evidence, null_tokens):
+                failures.append(
+                    f"Proposal {proposal_file} requires manual review evidence but has empty field: {manual_evidence_field}"
+                )
+
+    return failures
+
+
+def check_proposal_sections(
+    proposal_files: list[str],
+    policy: dict[str, Any],
+    warnings: list[str] | None = None,
+    manual_reviews: list[str] | None = None,
+) -> list[str]:
     failures: list[str] = []
     required_sections = process_policy(policy).get("required_proposal_sections", [])
     required_fields = get_required_proposal_fields(policy)
@@ -239,6 +348,7 @@ def check_proposal_sections(proposal_files: list[str], policy: dict[str, Any]) -
 
         failures.extend(check_mode_rule(text, path, policy))
         failures.extend(check_no_assumption_rule(text, path, policy))
+        failures.extend(check_design_principle_rules(text, path, policy, warnings, manual_reviews))
 
     return failures
 
@@ -323,7 +433,73 @@ def path_matches_rule(path: str, rule: str) -> bool:
     return path == rule
 
 
-def evaluate_change_coupling(changed_files: set[str], policy: dict[str, Any] | None = None) -> list[str]:
+def check_static_guard_rules(
+    changed_files: set[str],
+    policy: dict[str, Any],
+    warnings: list[str] | None = None,
+    manual_reviews: list[str] | None = None,
+) -> list[str]:
+    cfg = static_rule_config(policy)
+    if not cfg.get("enabled", False):
+        return []
+
+    failures: list[str] = []
+    rules = cfg.get("rules", [])
+    compiled_rules: list[tuple[str, str, str, re.Pattern[str]]] = []
+    for rule in rules:
+        if not isinstance(rule, dict):
+            failures.append(f"Invalid static guard rule entry in policy: {rule}")
+            continue
+        name = str(rule.get("name", "unnamed-rule"))
+        pattern = rule.get("pattern")
+        enforcement = str(rule.get("enforcement", "strict")).lower()
+        message = str(rule.get("message", "Static guard rule matched."))
+        if not isinstance(pattern, str) or not pattern:
+            failures.append(f"Static guard rule {name} has invalid regex pattern.")
+            continue
+        flags = re.IGNORECASE if bool(rule.get("ignore_case", False)) else 0
+        try:
+            regex = re.compile(pattern, flags)
+        except re.error as exc:
+            failures.append(f"Static guard rule {name} has invalid regex: {exc}")
+            continue
+        compiled_rules.append((name, enforcement, message, regex))
+
+    for path in sorted(changed_files):
+        if not static_scan_target(path, policy):
+            continue
+        file_path = Path(path)
+        if not file_path.exists():
+            continue
+        try:
+            text = file_path.read_text(encoding="utf-8")
+        except Exception:
+            failures.append(f"Unable to read file for static guard scan: {path}")
+            continue
+
+        for line_no, line in enumerate(text.splitlines(), start=1):
+            stripped = line.strip()
+            if not stripped or stripped.startswith("#"):
+                continue
+            for name, enforcement, message, regex in compiled_rules:
+                if regex.search(line):
+                    classify_issue(
+                        enforcement,
+                        f"{path}:{line_no}: [{name}] {message}",
+                        failures,
+                        warnings,
+                        manual_reviews,
+                    )
+
+    return failures
+
+
+def evaluate_change_coupling(
+    changed_files: set[str],
+    policy: dict[str, Any] | None = None,
+    warnings: list[str] | None = None,
+    manual_reviews: list[str] | None = None,
+) -> list[str]:
     if policy is None:
         policy = load_policy()
 
@@ -364,7 +540,7 @@ def evaluate_change_coupling(changed_files: set[str], policy: dict[str, Any] | N
         )
 
     if proposal_files:
-        failures.extend(check_proposal_sections(proposal_files, policy))
+        failures.extend(check_proposal_sections(proposal_files, policy, warnings, manual_reviews))
 
     if session_triggered and not session_files:
         session_root = session_policy(policy).get("root", "docs/sessions/")
@@ -375,6 +551,8 @@ def evaluate_change_coupling(changed_files: set[str], policy: dict[str, Any] | N
 
     if session_files:
         failures.extend(check_session_sections(session_files, policy))
+
+    failures.extend(check_static_guard_rules(changed_files, policy, warnings, manual_reviews))
 
     return failures
 
@@ -393,15 +571,18 @@ def main() -> int:
         return 1
     failures: list[str] = []
     warnings: list[str] = []
+    manual_reviews: list[str] = []
 
     failures.extend(check_required_process_files(policy))
     changed_files, diff_warnings = get_changed_files(args.base_sha, policy)
     warnings.extend(diff_warnings)
     if changed_files:
-        failures.extend(evaluate_change_coupling(changed_files, policy))
+        failures.extend(evaluate_change_coupling(changed_files, policy, warnings, manual_reviews))
 
     for warning in warnings:
         print(f"WARN: {warning}")
+    for item in manual_reviews:
+        print(f"MANUAL_REVIEW: {item}")
 
     if failures:
         enabled, mode = process_enforcement_state(policy)
@@ -425,3 +606,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+

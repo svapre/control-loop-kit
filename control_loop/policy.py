@@ -18,6 +18,7 @@ ALLOWED_EXPLANATION_STYLES = {"action_only", "action_reason", "teaching"}
 ALLOWED_PROGRESS_UPDATE_STYLES = {"minimal", "frequent", "silent_until_done"}
 ALLOWED_ASSUMPTION_POLICIES = {"ask_first", "low_risk_allowed"}
 ALLOWED_BRAINSTORM_RULE_STRICTNESS = {"strict", "flexible"}
+ALLOWED_RULE_ENFORCEMENTS = {"strict", "warn", "manual_review"}
 
 
 def deep_merge(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
@@ -137,6 +138,67 @@ def validate_process_guard_policy(process_policy: dict[str, Any], context: str) 
     no_assumption_rule = process_policy.get("no_assumption_rule")
     if no_assumption_rule is not None and not isinstance(no_assumption_rule, dict):
         raise ValueError(f"{context}.process_guard.no_assumption_rule must be an object")
+
+    design_rules = process_policy.get("design_principle_rules")
+    if design_rules is not None:
+        if not isinstance(design_rules, dict):
+            raise ValueError(f"{context}.process_guard.design_principle_rules must be an object")
+        _assert_list_of_strings(
+            design_rules,
+            "null_tokens",
+            f"{context}.process_guard.design_principle_rules",
+        )
+        rules = design_rules.get("required_value_rules")
+        if rules is not None:
+            if not isinstance(rules, list):
+                raise ValueError(
+                    f"{context}.process_guard.design_principle_rules.required_value_rules must be an array"
+                )
+            for idx, item in enumerate(rules):
+                if not isinstance(item, dict):
+                    raise ValueError(
+                        f"{context}.process_guard.design_principle_rules.required_value_rules[{idx}] must be an object"
+                    )
+                field = item.get("field")
+                enforcement = item.get("enforcement", "strict")
+                if not isinstance(field, str) or not field.strip():
+                    raise ValueError(
+                        f"{context}.process_guard.design_principle_rules.required_value_rules[{idx}].field "
+                        "must be a non-empty string"
+                    )
+                if not isinstance(enforcement, str) or enforcement not in ALLOWED_RULE_ENFORCEMENTS:
+                    raise ValueError(
+                        f"{context}.process_guard.design_principle_rules.required_value_rules[{idx}].enforcement "
+                        f"must be one of {sorted(ALLOWED_RULE_ENFORCEMENTS)}"
+                    )
+
+    static_rules = process_policy.get("static_guard_rules")
+    if static_rules is not None:
+        if not isinstance(static_rules, dict):
+            raise ValueError(f"{context}.process_guard.static_guard_rules must be an object")
+        _assert_list_of_strings(static_rules, "scan_extensions", f"{context}.process_guard.static_guard_rules")
+        _assert_list_of_strings(static_rules, "include_prefixes", f"{context}.process_guard.static_guard_rules")
+        _assert_list_of_strings(static_rules, "include_files", f"{context}.process_guard.static_guard_rules")
+        rules = static_rules.get("rules")
+        if rules is not None:
+            if not isinstance(rules, list):
+                raise ValueError(f"{context}.process_guard.static_guard_rules.rules must be an array")
+            for idx, item in enumerate(rules):
+                if not isinstance(item, dict):
+                    raise ValueError(
+                        f"{context}.process_guard.static_guard_rules.rules[{idx}] must be an object"
+                    )
+                pattern = item.get("pattern")
+                enforcement = item.get("enforcement", "strict")
+                if not isinstance(pattern, str) or not pattern.strip():
+                    raise ValueError(
+                        f"{context}.process_guard.static_guard_rules.rules[{idx}].pattern must be a non-empty string"
+                    )
+                if not isinstance(enforcement, str) or enforcement not in ALLOWED_RULE_ENFORCEMENTS:
+                    raise ValueError(
+                        f"{context}.process_guard.static_guard_rules.rules[{idx}].enforcement "
+                        f"must be one of {sorted(ALLOWED_RULE_ENFORCEMENTS)}"
+                    )
 
 
 def validate_ai_settings_loader(loader: dict[str, Any], context: str) -> None:

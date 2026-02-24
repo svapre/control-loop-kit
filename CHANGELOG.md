@@ -1,5 +1,22 @@
 # Changelog
 
+## v0.5.0
+- Added policy-driven design robustness checks in `process_guard`:
+  - design principle value checks with per-rule severity (`strict`, `warn`, `manual_review`),
+  - manual-review evidence requirement for declared special-cases.
+- Added static guard scan support for changed implementation files:
+  - regex rules and severity defined in policy,
+  - default rules detect absolute path literals and hardcoded PDF filename literals.
+- Extended default policy with robustness field markers for:
+  - generality scope,
+  - corpus and holdout evidence,
+  - config externalization evidence,
+  - determinism and idempotency evidence.
+- Extended policy validation for:
+  - `design_principle_rules`,
+  - `static_guard_rules`.
+- Updated docs to describe rule-severity and static-guard behavior.
+
 ## v0.4.1
 - Added model-catalog contract at `contracts/model_catalog.contract.json`.
 - Added prompt generator and sync checker:

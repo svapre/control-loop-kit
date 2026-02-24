@@ -33,7 +33,11 @@ Reusable process-control toolkit for AI-assisted software projects.
    - contract file: `contracts/model_catalog.contract.json`
    - generated prompt: `contracts/MODEL_CATALOG_PROMPT.md`
    - sync check: `python scripts/generate_model_catalog_prompt.py --check`
+10. Design robustness guardrails:
+   - proposal evidence checks for generality/no-hardcoding claims,
+   - per-rule severity (`strict`, `warn`, `manual_review`),
+   - static scans for obvious hardcoding/overfitting signals in changed code.
 
 ## Current release
-- `v0.4.1` (model-catalog contract + generated prompt sync guard)
+- `v0.5.0` (design robustness guardrails + static hardcoding checks)
 

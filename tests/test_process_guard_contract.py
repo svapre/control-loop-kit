@@ -48,7 +48,15 @@ def test_implementation_change_passes_with_proposal_design_and_session(tmp_path,
                 "- Traceable decisions:",
                 "- No silent guessing:",
                 "- Configuration over hardcoding:",
+                "- Config externalization evidence: values loaded from config files",
+                "- Generality scope: chaptered textbooks and policy documents",
+                "- Corpus coverage evidence: validated on three representative PDFs",
+                "- Holdout validation evidence: one unseen PDF validated without failures",
+                "- Single-document special case: NONE",
+                "- Manual review evidence: N/A",
+                "- Determinism evidence: repeated run produced same output hash",
                 "- Idempotent processing:",
+                "- Idempotency evidence: second run produced no additional bookmarks/links",
                 "- Fail loudly on invalid state:",
                 "- Performance budget awareness:",
                 "- Extensible module boundaries:",
@@ -125,4 +133,122 @@ def test_implementation_change_passes_with_proposal_design_and_session(tmp_path,
     failures = evaluate_change_coupling(changed, policy)
 
     assert not failures
+
+
+def test_static_guard_detects_absolute_path_literal_as_failure(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    policy = load_policy(repo_root=tmp_path)
+
+    core_file = Path("core/profiler.py")
+    core_file.parent.mkdir(parents=True, exist_ok=True)
+    core_file.write_text("BASE = 'C:\\\\temp\\\\pdfs'\n", encoding="utf-8")
+
+    failures = evaluate_change_coupling({core_file.as_posix()}, policy)
+
+    assert any("absolute path literal" in item.lower() for item in failures)
+
+
+def test_special_case_requires_manual_review_evidence(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    policy = load_policy(repo_root=tmp_path)
+
+    proposal = Path("docs/proposals/2026-02-24-special-case.md")
+    proposal.parent.mkdir(parents=True, exist_ok=True)
+    proposal.write_text(
+        "\n".join(
+            [
+                "# Proposal",
+                "## Problem",
+                "## Options Considered",
+                "## Work Mode",
+                "- Selected work mode: design",
+                "- Why this mode: needs tradeoff analysis",
+                "## Design Parameter Compliance",
+                "- Structural correctness: preserved",
+                "- Deterministic behavior: deterministic mapping",
+                "- Traceable decisions: logged",
+                "- No silent guessing: manual review on ambiguity",
+                "- Configuration over hardcoding: config-based thresholds",
+                "- Config externalization evidence: rules loaded from config",
+                "- Generality scope: intended for chaptered PDFs",
+                "- Corpus coverage evidence: validated on three samples",
+                "- Holdout validation evidence: one unseen sample passes",
+                "- Single-document special case: hardcoded vendor header fallback",
+                "- Manual review evidence: N/A",
+                "- Determinism evidence: output hash stable",
+                "- Idempotent processing: re-run safe",
+                "- Idempotency evidence: no duplicates on second run",
+                "- Fail loudly on invalid state: explicit warnings",
+                "- Performance budget awareness: unchanged",
+                "- Extensible module boundaries: separated stages",
+                "- Evidence-backed claims: tests attached",
+                "## Exception Register",
+                "- Violated parameter(s): NONE",
+                "- Why alternatives are worse: N/A",
+                "- Risk: medium",
+                "- Mitigation: rollback and review",
+                "- Rollback plan: revert commit",
+                "## Decision Scorecard",
+                "- Correctness impact: high",
+                "- Reliability impact: medium",
+                "- Complexity impact: medium",
+                "- Delivery speed impact: medium",
+                "- Operational risk: medium",
+                "- Why this is best overall now: temporary compatibility",
+                "## Assumptions and Unknowns",
+                "- Assumptions made: NONE",
+                "- Unknowns: NONE",
+                "- Clarifying questions for user: NONE",
+                "## Approval Checkpoint",
+                "- User confirmation required before implementation: no",
+                "- User confirmation evidence: N/A",
+                "## Decision",
+                "## Risks and Mitigations",
+                "## Validation Plan",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    session_log = Path("docs/sessions/2026-02-24-special-case.md")
+    session_log.parent.mkdir(parents=True, exist_ok=True)
+    session_log.write_text(
+        "\n".join(
+            [
+                "# Session Log",
+                "## Request",
+                "- Session ID: session-special-case",
+                "- Selected work mode: design",
+                "- Task summary: special case trial",
+                "## Planned Actions",
+                "- Files planned to change: core/profiler.py",
+                "- Why these changes: compatibility fallback",
+                "## User Approval",
+                "- User approval status: yes",
+                "- User approval evidence: approved for experiment",
+                "## AI Settings Applied",
+                "- confirm_before_changes: true",
+                "- assumption_policy: ask_first",
+                "- process_enforcement_mode: strict",
+                "## Execution Log",
+                "- Failure observed: none",
+                "- Corrective change made: n/a",
+                "- Validation checks run: tests",
+                "## Results and Feedback",
+                "- Feedback received: none",
+                "- Feedback applied: none",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    changed = {
+        "core/profiler.py",
+        proposal.as_posix(),
+        "docs/adr/2026-02-24-special-case.md",
+        session_log.as_posix(),
+    }
+    failures = evaluate_change_coupling(changed, policy)
+
+    assert any("manual review evidence" in item.lower() for item in failures)
 
