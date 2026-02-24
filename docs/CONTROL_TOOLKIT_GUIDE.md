@@ -211,3 +211,20 @@ The toolkit separates two guideline classes in policy:
 - examples: deterministic behavior, no hardcoding, fail loudly, traceability
 
 Projects can override either set partially or fully through policy, with guardrails.
+
+## 11) Contract-driven model catalog workflow
+Use these files when you want any AI to return model lists in one required format:
+
+1. Contract source of truth:
+- `contracts/model_catalog.contract.json`
+
+2. Generated prompt artifact:
+- `contracts/MODEL_CATALOG_PROMPT.md`
+
+3. Generator and sync check:
+```powershell
+python scripts/generate_model_catalog_prompt.py --write
+python scripts/generate_model_catalog_prompt.py --check
+```
+
+This keeps prompt text aligned with contract changes. CI fails if the prompt is stale.

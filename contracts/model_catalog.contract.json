@@ -1,0 +1,259 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://control-loop-kit.dev/contracts/model-catalog/v1",
+  "title": "ModelCatalog",
+  "description": "Normalized model catalog used for task-to-model routing decisions.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "catalog_version",
+    "generated_at_utc",
+    "source",
+    "models",
+    "routes"
+  ],
+  "properties": {
+    "catalog_version": {
+      "type": "string",
+      "pattern": "^[0-9]+$"
+    },
+    "generated_at_utc": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "source": {
+      "type": "string",
+      "description": "Where the model data came from (for example API docs URL, provider page, or manual snapshot note)."
+    },
+    "models": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/model"
+      }
+    },
+    "routes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/route"
+      }
+    }
+  },
+  "$defs": {
+    "model": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "provider",
+        "model_name",
+        "tier",
+        "strengths",
+        "weaknesses",
+        "status",
+        "context_window_tokens",
+        "pricing_hint",
+        "rate_limit_profile",
+        "last_verified_utc",
+        "source_url"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique ID used by routing rules and route candidate lists."
+        },
+        "provider": {
+          "type": "string"
+        },
+        "model_name": {
+          "type": "string"
+        },
+        "tier": {
+          "type": "string",
+          "enum": [
+            "fast",
+            "balanced",
+            "deep"
+          ]
+        },
+        "strengths": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "enum": [
+              "mechanical_edits",
+              "git_ops",
+              "test_runs",
+              "planning",
+              "architecture",
+              "debugging",
+              "review"
+            ]
+          }
+        },
+        "weaknesses": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "active",
+            "preview",
+            "deprecated"
+          ]
+        },
+        "context_window_tokens": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1
+        },
+        "pricing_hint": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "input_per_million_usd",
+            "output_per_million_usd"
+          ],
+          "properties": {
+            "input_per_million_usd": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "output_per_million_usd": {
+              "type": [
+                "number",
+                "null"
+              ]
+            }
+          }
+        },
+        "rate_limit_profile": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "risk"
+          ],
+          "properties": {
+            "risk": {
+              "type": "string",
+              "enum": [
+                "low",
+                "medium",
+                "high"
+              ]
+            },
+            "notes": {
+              "type": "string"
+            }
+          }
+        },
+        "last_verified_utc": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "source_url": {
+          "type": "string"
+        }
+      }
+    },
+    "route": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "intent",
+        "scope",
+        "risk",
+        "candidate_model_ids",
+        "fallback_route"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "intent": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "enum": [
+              "plan",
+              "implement",
+              "test",
+              "git",
+              "review",
+              "debug"
+            ]
+          }
+        },
+        "scope": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "enum": [
+              "docs_only",
+              "small_edit",
+              "multi_file",
+              "core_logic"
+            ]
+          }
+        },
+        "risk": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "enum": [
+              "low",
+              "medium",
+              "high"
+            ]
+          }
+        },
+        "candidate_model_ids": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          },
+          "description": "Priority-ordered model IDs. First entry is attempted first."
+        },
+        "fallback_route": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Route name to use if this route is exhausted."
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "prompt_generation": {
+    "title": "Model Catalog Collection Prompt",
+    "purpose": "Give this prompt to any AI so it returns model data in the exact contract format.",
+    "output_rules": [
+      "Return JSON only. Do not include Markdown.",
+      "Output must validate against this contract.",
+      "If a value is unknown, use null and add a short note in the nearest notes field."
+    ],
+    "input_placeholders": [
+      "{AS_OF_DATE_UTC}",
+      "{PROVIDER_SCOPE}",
+      "{MODEL_SOURCES_OR_FETCH_INSTRUCTION}"
+    ]
+  }
+}

@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.4.1
+- Added model-catalog contract at `contracts/model_catalog.contract.json`.
+- Added prompt generator and sync checker:
+  - `scripts/generate_model_catalog_prompt.py`
+  - generated artifact `contracts/MODEL_CATALOG_PROMPT.md`
+- Added toolkit CI enforcement for generated prompt sync.
+- Added tests for model-catalog contract routing shape and prompt sync.
+- Updated docs with contract-driven model-catalog workflow.
+
 ## v0.4.0
 - Added AI settings model to default policy:
   - response style settings,

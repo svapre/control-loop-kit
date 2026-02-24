@@ -55,4 +55,5 @@ python -m ruff check .
 python -m pytest -q
 python scripts/process_guard.py --mode ci
 python scripts/control_gate.py --mode ci
+python scripts/generate_model_catalog_prompt.py --check
 ```
