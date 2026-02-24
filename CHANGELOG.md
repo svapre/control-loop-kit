@@ -1,5 +1,18 @@
 # Changelog
 
+## v0.6.5
+- Completed BL-006 metric automation objective:
+  - added derived setpoint sync script (`scripts/sync_setpoints.py`),
+  - automated SP-003 median cycle-time computation from backlog evidence,
+  - enforced setpoint sync in CI (`python scripts/sync_setpoints.py --check`).
+- Added setpoint-sync contract tests:
+  - `tests/test_setpoint_sync_contract.py`.
+- Updated setpoint data:
+  - SP-003 status now computed (`on_track`) from current backlog evidence.
+- Updated backlog focus:
+  - closed BL-006,
+  - activated BL-003 as next active item.
+
 ## v0.6.4
 - Completed BL-005 release hygiene objective:
   - added release checklist (`docs/RELEASE_CHECKLIST.md`),

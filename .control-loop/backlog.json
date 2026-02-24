@@ -108,7 +108,7 @@
       "id": "BL-006",
       "title": "Automate SP-003 metric collection for issue-to-validated cycle time",
       "type": "future_plan",
-      "status": "active",
+      "status": "closed",
       "roadmap_lane": "next",
       "linked_setpoints": [
         "SP-003"
@@ -119,8 +119,9 @@
       "effort": "medium",
       "priority_score": 30,
       "owner_role": "thinking_ai",
-      "next_action": "Add metric collector script and keep setpoint current_value synchronized from evidence.",
+      "next_action": "No action. SP-003 metric sync is automated and enforced in CI.",
       "acceptance_checks": [
+        "python scripts/sync_setpoints.py --check",
         "python scripts/validate_backlog.py --check",
         "python -m pytest -q"
       ],
@@ -181,7 +182,7 @@
       "id": "BL-003",
       "title": "AI capability levels and multi-agent coordination plan",
       "type": "suggestion",
-      "status": "triaged",
+      "status": "active",
       "roadmap_lane": "later",
       "linked_setpoints": [
         "SP-003"

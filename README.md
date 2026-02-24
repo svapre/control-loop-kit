@@ -61,6 +61,10 @@ Reusable process-control toolkit for AI-assisted software projects.
 ## Control cockpit commands
 - Validate backlog/setpoint/roadmap coupling:
   - `python scripts/validate_backlog.py --check`
+- Validate derived setpoint metrics sync:
+  - `python scripts/sync_setpoints.py --check`
+- Recompute/write derived setpoint metrics:
+  - `python scripts/sync_setpoints.py --write`
 - Validate dashboard sync:
   - `python scripts/render_dashboard.py --check`
 - Regenerate dashboard:
@@ -71,5 +75,5 @@ Reusable process-control toolkit for AI-assisted software projects.
   - `python scripts/validate_release_hygiene.py --check --allow-unreleased-latest`
 
 ## Current release
-- `v0.6.4` (release hygiene checklist + tag alignment automation)
+- `v0.6.5` (SP-003 metric automation + CI setpoint sync check)
 

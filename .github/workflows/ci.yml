@@ -29,6 +29,9 @@ jobs:
       - name: Backlog Contract Check
         run: python scripts/validate_backlog.py --check
 
+      - name: Setpoint Metric Sync Check
+        run: python scripts/sync_setpoints.py --check
+
       - name: Dashboard Sync Check
         run: python scripts/render_dashboard.py --check
 

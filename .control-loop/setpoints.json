@@ -1,7 +1,7 @@
 {
   "meta": {
     "schema_version": "1",
-    "last_updated": "2026-02-24",
+    "last_updated": "2026-02-25",
     "description": "Control-system setpoints used to measure process health."
   },
   "setpoints": [
@@ -46,7 +46,7 @@
         "operator": "<=",
         "value": 7
       },
-      "status": "unknown",
+      "status": "on_track",
       "owner_role": "controller",
       "deadline": "2026-04-30"
     }
