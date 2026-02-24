@@ -1,5 +1,24 @@
 # Changelog
 
+## v0.6.2
+- Added toolkit-level AI entrypoint file:
+  - `AGENTS.md` with mandatory read order and pre-change operating rules.
+- Added onboarding documentation contract checker:
+  - `scripts/validate_onboarding_docs.py`.
+- Added onboarding contract tests:
+  - `tests/test_onboarding_docs_contract.py`.
+- Updated CI enforcement with onboarding docs check:
+  - `python scripts/validate_onboarding_docs.py --check`.
+- Updated docs for entrypoint/read-order consistency:
+  - `README.md`
+  - `docs/CONTROL_TOOLKIT_GUIDE.md`
+  - `docs/QUICKSTART.md`
+- Updated control cockpit state:
+  - closed BL-004 (branch protection complete),
+  - closed BL-007 (AI entrypoint complete),
+  - closed BL-008 (onboarding docs CI guard complete),
+  - refreshed roadmap and dashboard.
+
 ## v0.6.1
 - Added contract lifecycle artifact:
   - `.control-loop/contracts.json` baseline contract file for execution gating workflows.

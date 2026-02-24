@@ -10,6 +10,7 @@ Reusable process-control toolkit for AI-assisted software projects.
 - model-catalog contract and prompt generator for cross-agent model data collection.
 
 ## Read first
+- AI single-file entrypoint: `AGENTS.md`
 - Full onboarding (human + AI): `docs/CONTROL_TOOLKIT_GUIDE.md`
 - Manual setup quickstart: `docs/QUICKSTART.md`
 - Policy structure reference: `docs/POLICY_SCHEMA.md`
@@ -62,7 +63,9 @@ Reusable process-control toolkit for AI-assisted software projects.
   - `python scripts/render_dashboard.py --check`
 - Regenerate dashboard:
   - `python scripts/render_dashboard.py --write`
+- Validate onboarding doc contract:
+  - `python scripts/validate_onboarding_docs.py --check`
 
 ## Current release
-- `v0.6.0` (control cockpit backlog/setpoints/roadmap/dashboard loop)
+- `v0.6.2` (AI entrypoint contract + onboarding docs CI guard)
 

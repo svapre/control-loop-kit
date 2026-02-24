@@ -30,6 +30,9 @@ jobs:
       - name: Dashboard Sync Check
         run: python scripts/render_dashboard.py --check
 
+      - name: Onboarding Docs Contract Check
+        run: python scripts/validate_onboarding_docs.py --check
+
       - name: Lint
         run: ruff check .
 
