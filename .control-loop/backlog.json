@@ -127,6 +127,54 @@
       "updated_on": "2026-02-24"
     },
     {
+      "id": "BL-007",
+      "title": "Single-file AI entrypoint contract via toolkit AGENTS.md and required read order",
+      "type": "issue",
+      "status": "planned",
+      "roadmap_lane": "next",
+      "linked_setpoints": [
+        "SP-001",
+        "SP-002"
+      ],
+      "is_blocker": false,
+      "expected_error_reduction": "high",
+      "confidence": "high",
+      "effort": "medium",
+      "priority_score": 83,
+      "owner_role": "controller",
+      "next_action": "Add toolkit-level AGENTS.md with canonical document order for any AI session.",
+      "acceptance_checks": [
+        "python scripts/validate_backlog.py --check",
+        "python -m pytest -q"
+      ],
+      "created_on": "2026-02-24",
+      "updated_on": "2026-02-24"
+    },
+    {
+      "id": "BL-008",
+      "title": "CI guard for onboarding docs completeness and consistency",
+      "type": "issue",
+      "status": "planned",
+      "roadmap_lane": "next",
+      "linked_setpoints": [
+        "SP-001",
+        "SP-002"
+      ],
+      "is_blocker": false,
+      "expected_error_reduction": "high",
+      "confidence": "medium",
+      "effort": "medium",
+      "priority_score": 50,
+      "owner_role": "controller",
+      "next_action": "Add machine check that AGENTS.md, guide docs, and roadmap references stay in sync.",
+      "acceptance_checks": [
+        "python scripts/validate_backlog.py --check",
+        "python -m pytest -q"
+      ],
+      "created_on": "2026-02-24",
+      "updated_on": "2026-02-24"
+    },
+    {
       "id": "BL-003",
       "title": "AI capability levels and multi-agent coordination plan",
       "type": "suggestion",
