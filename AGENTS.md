@@ -13,11 +13,15 @@ Read these files in order before planning or editing:
 2. `docs/CONTROL_TOOLKIT_GUIDE.md`
 3. `docs/QUICKSTART.md`
 4. `docs/POLICY_SCHEMA.md`
-5. `docs/ROADMAP.md`
-6. `docs/CONTROL_DASHBOARD.md`
-7. `.control-loop/backlog.json`
-8. `.control-loop/setpoints.json`
-9. `.control-loop/contracts.json`
+5. `.control-loop/policy.json`
+6. `.control-loop/ai_settings.json`
+7. `docs/USER_CONTEXT.md`
+8. `docs/CONTEXT_INDEX.md`
+9. `docs/ROADMAP.md`
+10. `docs/CONTROL_DASHBOARD.md`
+11. `.control-loop/backlog.json`
+12. `.control-loop/setpoints.json`
+13. `.control-loop/contracts.json`
 
 ## Operating Rules
 - Work in two phases:
@@ -31,8 +35,10 @@ Read these files in order before planning or editing:
 Run and report:
 - `python scripts/generate_model_catalog_prompt.py --check`
 - `python scripts/validate_backlog.py --check`
+- `python scripts/sync_setpoints.py --check`
 - `python scripts/render_dashboard.py --check`
 - `python scripts/validate_onboarding_docs.py --check`
+- `python scripts/validate_release_hygiene.py --check --allow-unreleased-latest`
 - `python -m ruff check .`
 - `python -m pytest -q`
 

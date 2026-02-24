@@ -200,6 +200,31 @@
       ],
       "created_on": "2026-02-24",
       "updated_on": "2026-02-24"
+    },
+    {
+      "id": "BL-009",
+      "title": "Feature development lifecycle process from planning to production readiness",
+      "type": "future_plan",
+      "status": "planned",
+      "roadmap_lane": "next",
+      "linked_setpoints": [
+        "SP-002",
+        "SP-003"
+      ],
+      "is_blocker": false,
+      "expected_error_reduction": "high",
+      "confidence": "medium",
+      "effort": "medium",
+      "priority_score": 50,
+      "owner_role": "thinking_ai",
+      "next_action": "Design stage-gated feature workflow with design, implementation, validation, release, and rollback checkpoints.",
+      "acceptance_checks": [
+        "python scripts/validate_backlog.py --check",
+        "python scripts/render_dashboard.py --check",
+        "python -m pytest -q"
+      ],
+      "created_on": "2026-02-25",
+      "updated_on": "2026-02-25"
     }
   ]
 }

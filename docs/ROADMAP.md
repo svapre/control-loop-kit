@@ -7,6 +7,7 @@ This roadmap maps backlog IDs to delivery lanes.
 
 ## Next
 - BL-006 Automate SP-003 metric collection for issue-to-validated cycle time
+- BL-009 Feature development lifecycle process from planning to production readiness
 
 ## Later
 - BL-003 AI capability levels and multi-agent coordination plan

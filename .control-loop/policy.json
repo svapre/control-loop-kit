@@ -1,0 +1,173 @@
+{
+  "policy_override": {
+    "mode": "partial"
+  },
+  "control_gate": {
+    "required_files": [
+      "MASTER_PLAN.md",
+      "SPEC.md",
+      "SYSTEM.md",
+      "AGENTS.md",
+      "DESIGN.md",
+      "GOVERNANCE.md",
+      ".control-loop/policy.json",
+      ".control-loop/ai_settings.json",
+      "docs/USER_CONTEXT.md",
+      "docs/CONTEXT_INDEX.md",
+      "docs/PROCESS_CHANGELOG.md",
+      "docs/proposals/README.md",
+      "docs/proposals/TEMPLATE.md",
+      "docs/sessions/README.md",
+      "docs/sessions/TEMPLATE.md",
+      ".github/workflows/ci.yml",
+      ".github/pull_request_template.md",
+      "pyproject.toml",
+      "requirements-dev.txt",
+      "control_loop/process_guard.py"
+    ],
+    "ci_workflow_name": "ci",
+    "readiness_tag": "control-system-ready"
+  },
+  "process_guard": {
+    "required_process_files": [
+      "GOVERNANCE.md",
+      "DESIGN.md",
+      ".control-loop/policy.json",
+      ".control-loop/ai_settings.json",
+      "docs/USER_CONTEXT.md",
+      "docs/CONTEXT_INDEX.md",
+      "docs/PROCESS_CHANGELOG.md",
+      "docs/proposals/README.md",
+      "docs/proposals/TEMPLATE.md",
+      "docs/sessions/README.md",
+      "docs/sessions/TEMPLATE.md",
+      ".github/pull_request_template.md"
+    ],
+    "implementation_prefixes": [
+      "control_loop/",
+      "scripts/",
+      "tests/",
+      "contracts/"
+    ],
+    "implementation_files": [],
+    "process_controlled_files": [
+      "AGENTS.md",
+      "SPEC.md",
+      "SYSTEM.md",
+      "GOVERNANCE.md",
+      "DESIGN.md",
+      ".control-loop/policy.json",
+      ".control-loop/ai_settings.json",
+      "docs/USER_CONTEXT.md",
+      "docs/CONTEXT_INDEX.md",
+      "docs/proposals/README.md",
+      "docs/proposals/TEMPLATE.md",
+      "docs/sessions/README.md",
+      "docs/sessions/TEMPLATE.md",
+      ".github/pull_request_template.md",
+      ".github/workflows/ci.yml",
+      "control_loop/control_gate.py",
+      "control_loop/process_guard.py",
+      "scripts/validate_backlog.py",
+      "scripts/render_dashboard.py",
+      "scripts/validate_onboarding_docs.py",
+      "scripts/validate_release_hygiene.py",
+      "scripts/sync_setpoints.py"
+    ],
+    "project_guideline_fields": [
+      "- Structural correctness:",
+      "- Deterministic behavior:",
+      "- Traceable decisions:",
+      "- No silent guessing:",
+      "- Configuration over hardcoding:",
+      "- Generality scope:",
+      "- Validation coverage evidence:",
+      "- Holdout validation evidence:",
+      "- Single-case exception:",
+      "- Manual review evidence:",
+      "- Determinism evidence:",
+      "- Idempotent processing:",
+      "- Idempotency evidence:",
+      "- Fail loudly on invalid state:",
+      "- Performance budget awareness:",
+      "- Extensible module boundaries:",
+      "- Evidence-backed claims:",
+      "- Violated parameter(s):",
+      "- Why alternatives are worse:",
+      "- Risk:",
+      "- Mitigation:",
+      "- Rollback plan:",
+      "- Correctness impact:",
+      "- Reliability impact:",
+      "- Complexity impact:",
+      "- Delivery speed impact:",
+      "- Operational risk:",
+      "- Why this is best overall now:"
+    ],
+    "default_branch": "master",
+    "mode_rule": {
+      "enabled": true,
+      "selected_mode_field": "- Selected work mode:",
+      "allowed_modes": [
+        "routine",
+        "design"
+      ]
+    },
+    "no_assumption_rule": {
+      "enabled": true,
+      "assumptions_field": "- Assumptions made:",
+      "confirmation_required_field": "- User confirmation required before implementation:",
+      "confirmation_evidence_field": "- User confirmation evidence:"
+    },
+    "execution_phase_rules": {
+      "enabled": true,
+      "phase_field": "- Workflow phase:",
+      "change_scope_field": "- Change scope:",
+      "implementation_approval_token_field": "- Implementation approval token:",
+      "required_implementation_approval_token": "APPROVE_IMPLEMENT",
+      "allowed_phases": [
+        "think",
+        "implement"
+      ],
+      "allowed_scopes": [
+        "project",
+        "toolkit",
+        "both"
+      ],
+      "toolkit_prefixes": [
+        "control_loop",
+        "scripts",
+        "tests",
+        "contracts",
+        ".github",
+        "docs",
+        ".control-loop"
+      ]
+    },
+    "design_principle_rules": {
+      "null_tokens": [
+        "",
+        "none",
+        "n/a",
+        "na",
+        "tbd",
+        "todo"
+      ],
+      "manual_review_evidence_field": "- Manual review evidence:",
+      "required_value_rules": []
+    },
+    "static_guard_rules": {
+      "enabled": false,
+      "scan_extensions": [
+        ".py"
+      ],
+      "include_prefixes": [
+        "control_loop/",
+        "scripts/"
+      ],
+      "include_files": [],
+      "rules": []
+    }
+  }
+}
+
