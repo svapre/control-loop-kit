@@ -38,6 +38,15 @@ The toolkit also provides policy-driven AI behavior settings:
 - assumption policy
 - global enforcement switch (`strict` or `advisory`)
 
+The toolkit also provides a control cockpit for focus and planning:
+- `.control-loop/setpoints.json` for measurable target values
+- `.control-loop/backlog.json` for issues/suggestions/future plans
+- `docs/ROADMAP.md` for `Now / Next / Later` mapping
+- `docs/CONTROL_DASHBOARD.md` generated from source data
+- machine checks:
+  - `python scripts/validate_backlog.py --check`
+  - `python scripts/render_dashboard.py --check`
+
 ## 3) Guarantees and non-guarantees
 ### Guarantees
 - process checks are executable and repeatable
@@ -131,6 +140,8 @@ python -m ruff check .
 python -m pytest -q
 python scripts/process_guard.py --mode ci
 python scripts/control_gate.py --mode ci
+python scripts/validate_backlog.py --check
+python scripts/render_dashboard.py --check
 ```
 
 ### Step 6: Enable branch protection (recommended)

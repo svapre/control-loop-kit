@@ -1,0 +1,83 @@
+{
+  "meta": {
+    "schema_version": "1",
+    "last_updated": "2026-02-24",
+    "description": "Single control backlog for issues, suggestions, and future plans."
+  },
+  "items": [
+    {
+      "id": "BL-001",
+      "title": "Control cockpit foundation for roadmap and dashboard tracking",
+      "type": "future_plan",
+      "status": "active",
+      "roadmap_lane": "now",
+      "linked_setpoints": [
+        "SP-001",
+        "SP-002",
+        "SP-003"
+      ],
+      "is_blocker": true,
+      "expected_error_reduction": "high",
+      "confidence": "high",
+      "effort": "medium",
+      "priority_score": 167,
+      "owner_role": "thinking_ai",
+      "next_action": "Implement backlog/setpoint validators, dashboard renderer, and CI checks.",
+      "acceptance_checks": [
+        "python scripts/validate_backlog.py --check",
+        "python scripts/render_dashboard.py --check",
+        "python -m ruff check .",
+        "python -m pytest -q"
+      ],
+      "created_on": "2026-02-24",
+      "updated_on": "2026-02-24"
+    },
+    {
+      "id": "BL-002",
+      "title": "Contract lifecycle state machine for execution gating",
+      "type": "future_plan",
+      "status": "planned",
+      "roadmap_lane": "next",
+      "linked_setpoints": [
+        "SP-002",
+        "SP-003"
+      ],
+      "is_blocker": true,
+      "expected_error_reduction": "high",
+      "confidence": "medium",
+      "effort": "large",
+      "priority_score": 60,
+      "owner_role": "thinking_ai",
+      "next_action": "Define contract schema and enforce active-contract scope in process guard.",
+      "acceptance_checks": [
+        "python scripts/process_guard.py --mode ci",
+        "python -m pytest -q"
+      ],
+      "created_on": "2026-02-24",
+      "updated_on": "2026-02-24"
+    },
+    {
+      "id": "BL-003",
+      "title": "AI capability levels and multi-agent coordination plan",
+      "type": "suggestion",
+      "status": "triaged",
+      "roadmap_lane": "later",
+      "linked_setpoints": [
+        "SP-003"
+      ],
+      "is_blocker": false,
+      "expected_error_reduction": "medium",
+      "confidence": "medium",
+      "effort": "large",
+      "priority_score": 18,
+      "owner_role": "thinking_ai",
+      "next_action": "Design capability-level schema and lock strategy for concurrent agents.",
+      "acceptance_checks": [
+        "python scripts/validate_backlog.py --check",
+        "python -m pytest -q"
+      ],
+      "created_on": "2026-02-24",
+      "updated_on": "2026-02-24"
+    }
+  ]
+}

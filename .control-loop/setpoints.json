@@ -1,0 +1,54 @@
+{
+  "meta": {
+    "schema_version": "1",
+    "last_updated": "2026-02-24",
+    "description": "Control-system setpoints used to measure process health."
+  },
+  "setpoints": [
+    {
+      "id": "SP-001",
+      "name": "CI pass rate (30d)",
+      "metric": "ci_pass_rate_30d",
+      "source": "github_actions.ci",
+      "current_value": 1.0,
+      "unit": "ratio",
+      "target": {
+        "operator": ">=",
+        "value": 0.98
+      },
+      "status": "on_track",
+      "owner_role": "controller",
+      "deadline": "2026-03-31"
+    },
+    {
+      "id": "SP-002",
+      "name": "Process regression incidents per month",
+      "metric": "process_regressions_monthly",
+      "source": "issue_tracker.control_loop",
+      "current_value": 0,
+      "unit": "count",
+      "target": {
+        "operator": "<=",
+        "value": 1
+      },
+      "status": "on_track",
+      "owner_role": "controller",
+      "deadline": "2026-03-31"
+    },
+    {
+      "id": "SP-003",
+      "name": "Median issue-to-validated cycle time (days)",
+      "metric": "median_cycle_time_days",
+      "source": "backlog_audit",
+      "current_value": 0,
+      "unit": "days",
+      "target": {
+        "operator": "<=",
+        "value": 7
+      },
+      "status": "unknown",
+      "owner_role": "controller",
+      "deadline": "2026-04-30"
+    }
+  ]
+}

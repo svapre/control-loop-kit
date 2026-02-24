@@ -1,5 +1,26 @@
 # Changelog
 
+## v0.6.0
+- Added control cockpit source files:
+  - `.control-loop/setpoints.json` for measurable target outputs.
+  - `.control-loop/backlog.json` for issues/suggestions/plans with priority scoring inputs.
+  - `docs/ROADMAP.md` for `Now / Next / Later` planning lanes.
+  - `docs/CONTROL_DASHBOARD.md` generated state view for humans and agents.
+- Added `scripts/validate_backlog.py`:
+  - validates backlog and setpoint schema contracts,
+  - validates roadmap coupling and lane alignment,
+  - enforces single active item and deterministic priority score calculation.
+- Added `scripts/render_dashboard.py`:
+  - renders dashboard from source data,
+  - provides `--check` sync enforcement and `--write` regeneration.
+- Added tests:
+  - `tests/test_backlog_contract.py`
+  - `tests/test_dashboard_render_contract.py`
+- Updated toolkit CI to enforce:
+  - `python scripts/validate_backlog.py --check`
+  - `python scripts/render_dashboard.py --check`
+- Updated docs (`README.md`, `docs/CONTROL_TOOLKIT_GUIDE.md`, `docs/QUICKSTART.md`) with cockpit workflow and commands.
+
 ## v0.5.1
 - Re-based toolkit defaults to stay project-agnostic:
   - generic proposal field markers (`Validation coverage evidence`, `Single-case exception`),

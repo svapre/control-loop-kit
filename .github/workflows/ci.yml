@@ -24,6 +24,12 @@ jobs:
       - name: Generated Prompt Sync
         run: python scripts/generate_model_catalog_prompt.py --check
 
+      - name: Backlog Contract Check
+        run: python scripts/validate_backlog.py --check
+
+      - name: Dashboard Sync Check
+        run: python scripts/render_dashboard.py --check
+
       - name: Lint
         run: ruff check .
 

@@ -40,6 +40,10 @@ Add these project files:
 - `docs/CONTEXT_INDEX.md`
 - `docs/sessions/README.md`
 - `docs/sessions/TEMPLATE.md`
+- `.control-loop/setpoints.json`
+- `.control-loop/backlog.json`
+- `docs/ROADMAP.md`
+- `docs/CONTROL_DASHBOARD.md`
 
 ## CI steps
 1. checkout repo with `submodules: recursive`
@@ -58,5 +62,7 @@ python -m ruff check .
 python -m pytest -q
 python scripts/process_guard.py --mode ci
 python scripts/control_gate.py --mode ci
+python scripts/validate_backlog.py --check
+python scripts/render_dashboard.py --check
 python scripts/generate_model_catalog_prompt.py --check
 ```
