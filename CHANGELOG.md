@@ -1,5 +1,33 @@
 # Changelog
 
+## v0.4.0
+- Added AI settings model to default policy:
+  - response style settings,
+  - execution behavior settings,
+  - global process switch (`strict` or `advisory`),
+  - session log configuration,
+  - context-management configuration.
+- Added AI settings loader support in `control_loop/policy.py`:
+  - loads `.control-loop/ai_settings.json` by default,
+  - supports env override (`CONTROL_LOOP_AI_SETTINGS_PATH`),
+  - validates AI settings schema and waiver requirements.
+- Extended `process_guard` with:
+  - session-log enforcement for code/process changes,
+  - required approval evidence checks,
+  - failure-to-correction evidence checks,
+  - advisory-mode behavior through global switch.
+- Updated default required artifacts:
+  - `.control-loop/ai_settings.json`,
+  - `docs/CONTEXT_INDEX.md`,
+  - `docs/sessions/README.md`,
+  - `docs/sessions/TEMPLATE.md`.
+- Added toolkit templates:
+  - `docs/AI_SETTINGS_TEMPLATE.json`,
+  - `docs/CONTEXT_INDEX_TEMPLATE.md`,
+  - `docs/SESSION_TEMPLATE.md`.
+- Expanded docs (`README.md`, `docs/CONTROL_TOOLKIT_GUIDE.md`, `docs/QUICKSTART.md`, `docs/POLICY_SCHEMA.md`).
+- Added and extended tests for AI settings and session-enforcement behavior.
+
 ## v0.3.0
 - Added strict policy validation in loader (`control_loop/policy.py`).
 - Added controlled override mechanism:

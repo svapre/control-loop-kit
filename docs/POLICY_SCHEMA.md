@@ -7,7 +7,9 @@ This document defines the expected shape of `.control-loop/policy.json`.
 {
   "policy_override": {},
   "control_gate": {},
-  "process_guard": {}
+  "process_guard": {},
+  "ai_settings_loader": {},
+  "ai_settings": {}
 }
 ```
 
@@ -40,6 +42,7 @@ This document defines the expected shape of `.control-loop/policy.json`.
 - `process_guideline_fields`: process markers (how work should be executed)
 - `project_guideline_fields`: project quality markers (what output quality is required)
 - `default_branch`: string (for merge-base and diff baseline)
+- session checks are controlled via `ai_settings.session_log`
 
 ### Work mode rule
 ```json
@@ -57,6 +60,63 @@ This document defines the expected shape of `.control-loop/policy.json`.
   "assumptions_field": "- Assumptions made:",
   "confirmation_required_field": "- User confirmation required before implementation:",
   "confirmation_evidence_field": "- User confirmation evidence:"
+}
+```
+
+## `ai_settings_loader` keys
+- `default_path`: path to AI settings file (default `.control-loop/ai_settings.json`)
+- `env_var`: environment variable name for AI settings path override
+
+## `ai_settings` keys
+### Global process switch
+```json
+"global_switch": {
+  "enabled": true,
+  "mode": "strict",
+  "require_waiver_when_disabled": true,
+  "waiver": {
+    "reason": "N/A",
+    "approved_by": "N/A",
+    "expires_on": "N/A"
+  }
+}
+```
+
+### Response settings
+```json
+"response": {
+  "detail_level": "normal",
+  "language_style": "simple",
+  "explanation_style": "action_reason",
+  "progress_update_style": "frequent"
+}
+```
+
+### Execution settings
+```json
+"execution": {
+  "confirm_before_changes": true,
+  "assumption_policy": "ask_first",
+  "brainstorming_rule_strictness": "strict"
+}
+```
+
+### Context management
+```json
+"context_management": {
+  "context_index_path": "docs/CONTEXT_INDEX.md",
+  "required_tiers": ["P0", "P1", "P2"]
+}
+```
+
+### Session log settings
+```json
+"session_log": {
+  "root": "docs/sessions/",
+  "required_for_prefixes": ["core/", "scripts/"],
+  "required_for_files": ["main.py"],
+  "required_sections": ["## Request", "## Planned Actions"],
+  "required_fields": ["- Session ID:", "- User approval status:"]
 }
 ```
 

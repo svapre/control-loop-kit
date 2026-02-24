@@ -1,0 +1,85 @@
+{
+  "global_switch": {
+    "enabled": true,
+    "mode": "strict",
+    "require_waiver_when_disabled": true,
+    "waiver": {
+      "reason": "N/A",
+      "approved_by": "N/A",
+      "expires_on": "N/A"
+    }
+  },
+  "response": {
+    "detail_level": "normal",
+    "language_style": "simple",
+    "explanation_style": "action_reason",
+    "progress_update_style": "frequent"
+  },
+  "execution": {
+    "confirm_before_changes": true,
+    "assumption_policy": "ask_first",
+    "brainstorming_rule_strictness": "strict"
+  },
+  "context_management": {
+    "context_index_path": "docs/CONTEXT_INDEX.md",
+    "required_tiers": [
+      "P0",
+      "P1",
+      "P2"
+    ]
+  },
+  "session_log": {
+    "root": "docs/sessions/",
+    "ignored_files": [
+      "docs/sessions/README.md",
+      "docs/sessions/TEMPLATE.md"
+    ],
+    "required_for_prefixes": [
+      "core/",
+      "data_models/",
+      "utils/",
+      "scripts/",
+      ".github/workflows/"
+    ],
+    "required_for_files": [
+      "main.py",
+      ".control-loop/policy.json",
+      ".control-loop/ai_settings.json"
+    ],
+    "required_sections": [
+      "## Request",
+      "## Planned Actions",
+      "## User Approval",
+      "## AI Settings Applied",
+      "## Execution Log",
+      "## Results and Feedback"
+    ],
+    "required_fields": [
+      "- Session ID:",
+      "- Selected work mode:",
+      "- Task summary:",
+      "- Files planned to change:",
+      "- Why these changes:",
+      "- User approval status:",
+      "- User approval evidence:",
+      "- confirm_before_changes:",
+      "- assumption_policy:",
+      "- process_enforcement_mode:",
+      "- Failure observed:",
+      "- Corrective change made:",
+      "- Validation checks run:",
+      "- Feedback received:",
+      "- Feedback applied:"
+    ],
+    "user_approval_status_field": "- User approval status:",
+    "user_approval_evidence_field": "- User approval evidence:",
+    "failure_observed_field": "- Failure observed:",
+    "corrective_change_field": "- Corrective change made:",
+    "null_tokens": [
+      "none",
+      "n/a",
+      "na",
+      ""
+    ]
+  }
+}
