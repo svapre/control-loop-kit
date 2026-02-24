@@ -4,8 +4,10 @@
 ```powershell
 git submodule add https://github.com/svapre/control-loop-kit.git tooling/control-loop-kit
 git -C tooling/control-loop-kit fetch --tags
-git -C tooling/control-loop-kit checkout v0.5.1
+git -C tooling/control-loop-kit checkout v0.6.1
 ```
+
+Before making changes, read `tooling/control-loop-kit/AGENTS.md`.
 
 ## Required local wrappers
 - `scripts/control_gate.py`
@@ -65,5 +67,6 @@ python scripts/process_guard.py --mode ci
 python scripts/control_gate.py --mode ci
 python scripts/validate_backlog.py --check
 python scripts/render_dashboard.py --check
+python scripts/validate_onboarding_docs.py --check
 python scripts/generate_model_catalog_prompt.py --check
 ```

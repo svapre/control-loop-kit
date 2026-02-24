@@ -50,7 +50,7 @@
       "owner_role": "thinking_ai",
       "next_action": "Define contract schema and enforce active-contract scope in process guard.",
       "acceptance_checks": [
-        "python scripts/process_guard.py --mode ci",
+        "python -m pytest -q tests/test_process_guard_contract.py",
         "python -m pytest -q"
       ],
       "created_on": "2026-02-24",
@@ -60,7 +60,7 @@
       "id": "BL-004",
       "title": "Protect toolkit master branch with required CI and pull request flow",
       "type": "issue",
-      "status": "planned",
+      "status": "closed",
       "roadmap_lane": "now",
       "linked_setpoints": [
         "SP-001",
@@ -72,7 +72,7 @@
       "effort": "medium",
       "priority_score": 167,
       "owner_role": "controller",
-      "next_action": "Enable branch protection policy for master with required verify check and PR-only merges.",
+      "next_action": "No action. Branch protection is enabled on master with required verify check and PR flow.",
       "acceptance_checks": [
         "gh api repos/svapre/control-loop-kit/branches/master/protection",
         "python -m pytest -q"
@@ -130,7 +130,7 @@
       "id": "BL-007",
       "title": "Single-file AI entrypoint contract via toolkit AGENTS.md and required read order",
       "type": "issue",
-      "status": "planned",
+      "status": "closed",
       "roadmap_lane": "next",
       "linked_setpoints": [
         "SP-001",
@@ -142,8 +142,9 @@
       "effort": "medium",
       "priority_score": 83,
       "owner_role": "controller",
-      "next_action": "Add toolkit-level AGENTS.md with canonical document order for any AI session.",
+      "next_action": "No action. Toolkit AGENTS.md entrypoint and canonical read order are implemented.",
       "acceptance_checks": [
+        "python scripts/validate_onboarding_docs.py --check",
         "python scripts/validate_backlog.py --check",
         "python -m pytest -q"
       ],
@@ -154,7 +155,7 @@
       "id": "BL-008",
       "title": "CI guard for onboarding docs completeness and consistency",
       "type": "issue",
-      "status": "planned",
+      "status": "closed",
       "roadmap_lane": "next",
       "linked_setpoints": [
         "SP-001",
@@ -166,8 +167,9 @@
       "effort": "medium",
       "priority_score": 50,
       "owner_role": "controller",
-      "next_action": "Add machine check that AGENTS.md, guide docs, and roadmap references stay in sync.",
+      "next_action": "No action. CI now enforces onboarding docs consistency via validate_onboarding_docs.",
       "acceptance_checks": [
+        "python scripts/validate_onboarding_docs.py --check",
         "python scripts/validate_backlog.py --check",
         "python -m pytest -q"
       ],

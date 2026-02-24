@@ -47,6 +47,7 @@ The toolkit also provides a control cockpit for focus and planning:
 - machine checks:
   - `python scripts/validate_backlog.py --check`
   - `python scripts/render_dashboard.py --check`
+  - `python scripts/validate_onboarding_docs.py --check`
 
 ## 3) Guarantees and non-guarantees
 ### Guarantees
@@ -60,16 +61,10 @@ The toolkit also provides a control cockpit for focus and planning:
 - does not eliminate all defects
 
 ## 4) Single-file AI onboarding contract
-If an AI reads only one file, it should read this file before changes.
+If an AI reads only one file, it should read `AGENTS.md` before changes.
 
 Required AI behavior:
-1. Read project control docs in this order:
-   - `MASTER_PLAN.md`
-   - `SPEC.md`
-   - `SYSTEM.md`
-   - `DESIGN.md`
-   - `GOVERNANCE.md`
-   - `docs/USER_CONTEXT.md`
+1. Follow the mandatory read order listed in `AGENTS.md`.
 2. Declare work mode before major actions:
    - `routine` for low-risk implementation and maintenance
    - `design` for architecture, tradeoffs, or unclear requirements
@@ -86,7 +81,7 @@ Follow these steps in target repository.
 ```powershell
 git submodule add https://github.com/svapre/control-loop-kit.git tooling/control-loop-kit
 git -C tooling/control-loop-kit fetch --tags
-git -C tooling/control-loop-kit checkout v0.5.1
+git -C tooling/control-loop-kit checkout v0.6.1
 ```
 
 ### Step 2: Add local wrappers
@@ -148,6 +143,7 @@ python scripts/process_guard.py --mode ci
 python scripts/control_gate.py --mode ci
 python scripts/validate_backlog.py --check
 python scripts/render_dashboard.py --check
+python scripts/validate_onboarding_docs.py --check
 ```
 
 ### Step 6: Enable branch protection (recommended)
