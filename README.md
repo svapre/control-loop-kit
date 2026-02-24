@@ -40,7 +40,25 @@ Reusable process-control toolkit for AI-assisted software projects.
 11. Phase and scope execution checks:
     - session markers enforce `think` vs `implement` workflow boundaries,
     - implementation changes require explicit approval token evidence.
+12. Control cockpit tracking:
+    - setpoints file defines measurable targets,
+    - backlog file tracks issues/suggestions/plans with machine-computed priority score,
+    - roadmap and generated dashboard keep state visible for humans and agents.
+
+## Control cockpit files
+- `.control-loop/setpoints.json`
+- `.control-loop/backlog.json`
+- `docs/ROADMAP.md`
+- `docs/CONTROL_DASHBOARD.md`
+
+## Control cockpit commands
+- Validate backlog/setpoint/roadmap coupling:
+  - `python scripts/validate_backlog.py --check`
+- Validate dashboard sync:
+  - `python scripts/render_dashboard.py --check`
+- Regenerate dashboard:
+  - `python scripts/render_dashboard.py --write`
 
 ## Current release
-- `v0.5.1` (generic defaults + phase/scope execution controls)
+- `v0.6.0` (control cockpit backlog/setpoints/roadmap/dashboard loop)
 
