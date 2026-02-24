@@ -1,4 +1,8 @@
 {
+  "meta": {
+    "policy_version": "1",
+    "description": "Base process and project policy for control loop toolkit."
+  },
   "control_gate": {
     "required_files": [
       "MASTER_PLAN.md",
@@ -103,9 +107,16 @@
       "## Risks and Mitigations",
       "## Validation Plan"
     ],
-    "required_proposal_fields": [
+    "process_guideline_fields": [
       "- Selected work mode:",
       "- Why this mode:",
+      "- Assumptions made:",
+      "- Unknowns:",
+      "- Clarifying questions for user:",
+      "- User confirmation required before implementation:",
+      "- User confirmation evidence:"
+    ],
+    "project_guideline_fields": [
       "- Structural correctness:",
       "- Deterministic behavior:",
       "- Traceable decisions:",
@@ -126,12 +137,7 @@
       "- Complexity impact:",
       "- Delivery speed impact:",
       "- Operational risk:",
-      "- Why this is best overall now:",
-      "- Assumptions made:",
-      "- Unknowns:",
-      "- Clarifying questions for user:",
-      "- User confirmation required before implementation:",
-      "- User confirmation evidence:"
+      "- Why this is best overall now:"
     ],
     "mode_rule": {
       "enabled": true,

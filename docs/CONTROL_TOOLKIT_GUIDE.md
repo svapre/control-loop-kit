@@ -26,6 +26,7 @@ The toolkit provides two executable gates:
 - enforces proposal structure
 - enforces work-mode declaration (`routine` or `design`)
 - enforces ambiguity stop rule (assumptions need confirmation evidence)
+- enforces process-vs-project guideline markers from policy
 
 ## 3) Guarantees and non-guarantees
 ### Guarantees
@@ -65,7 +66,7 @@ Follow these steps in target repository.
 ```powershell
 git submodule add https://github.com/svapre/control-loop-kit.git tooling/control-loop-kit
 git -C tooling/control-loop-kit fetch --tags
-git -C tooling/control-loop-kit checkout v0.2.1
+git -C tooling/control-loop-kit checkout v0.3.0
 ```
 
 ### Step 2: Add local wrappers
@@ -76,11 +77,22 @@ Create `scripts/control_gate.py` and `scripts/process_guard.py` wrappers that im
 ### Step 3: Add policy file
 Create `.control-loop/policy.json` in the project root.
 
+Recommended policy strategy:
+1. Use partial override by default (`policy_override.mode = "partial"`).
+2. Use full override only when needed and require waiver metadata:
+   - `reason`
+   - `approved_by`
+   - `expires_on`
+
 Policy resolution order:
 1. `--policy <path>` CLI argument
 2. `CONTROL_LOOP_POLICY_PATH` environment variable
 3. project `.control-loop/policy.json`
 4. toolkit `control_loop/default_policy.json`
+
+Override behavior:
+1. `partial`: deep-merge project override into toolkit base policy.
+2. `full`: replace toolkit base policy with project policy, but only with waiver metadata.
 
 ### Step 4: Add CI integration
 In CI, include:
@@ -163,3 +175,15 @@ It is portable because:
 - documentation defines mandatory behavior independent of model vendor
 - human approval remains explicit and external
 
+## 10) Process vs project guidelines
+The toolkit separates two guideline classes in policy:
+
+1. Process guidelines:
+- how work is done
+- examples: work mode declaration, assumptions/unknowns, approval checkpoint
+
+2. Project guidelines:
+- what quality principles the project output must satisfy
+- examples: deterministic behavior, no hardcoding, fail loudly, traceability
+
+Projects can override either set partially or fully through policy, with guardrails.

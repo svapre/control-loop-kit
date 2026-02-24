@@ -157,7 +157,11 @@ def main() -> int:
     parser.add_argument("--policy", default=None, help="Path to policy JSON override")
     args = parser.parse_args()
 
-    policy = load_policy(args.policy)
+    try:
+        policy = load_policy(args.policy)
+    except Exception as exc:
+        print(f"FAIL: policy load/validation error: {exc}")
+        return 1
     failures: list[str] = []
     failures.extend(check_required_files(policy))
     failures.extend(check_master_plan_guard(policy))
@@ -179,4 +183,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
