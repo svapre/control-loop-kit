@@ -66,3 +66,59 @@ def test_full_override_with_waiver_and_sections_passes(tmp_path: Path):
     policy = load_policy(repo_root=tmp_path)
     assert policy["control_gate"]["required_files"] == []
 
+
+def test_ai_settings_file_override_merges_into_effective_policy(tmp_path: Path):
+    policy_dir = tmp_path / ".control-loop"
+    policy_dir.mkdir(parents=True)
+    (policy_dir / "policy.json").write_text(
+        json.dumps(
+            {
+                "policy_override": {"mode": "partial"},
+            }
+        ),
+        encoding="utf-8",
+    )
+    (policy_dir / "ai_settings.json").write_text(
+        json.dumps(
+            {
+                "response": {"detail_level": "detailed"},
+                "execution": {"confirm_before_changes": True},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    policy = load_policy(repo_root=tmp_path)
+    assert policy["ai_settings"]["response"]["detail_level"] == "detailed"
+    assert policy["ai_settings"]["execution"]["confirm_before_changes"] is True
+
+
+def test_disabling_global_switch_requires_waiver_when_required(tmp_path: Path):
+    policy_dir = tmp_path / ".control-loop"
+    policy_dir.mkdir(parents=True)
+    (policy_dir / "ai_settings.json").write_text(
+        json.dumps(
+            {
+                "global_switch": {
+                    "enabled": False,
+                    "mode": "strict",
+                    "require_waiver_when_disabled": True,
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="waiver"):
+        load_policy(repo_root=tmp_path)
+
+
+def test_default_policy_remains_project_agnostic():
+    policy = load_policy()
+    project_fields = policy["process_guard"]["project_guideline_fields"]
+
+    assert "- Validation coverage evidence:" in project_fields
+    assert "- Single-case exception:" in project_fields
+    assert "- Corpus coverage evidence:" not in project_fields
+    assert "- Single-document special case:" not in project_fields
+

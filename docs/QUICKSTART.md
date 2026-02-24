@@ -4,7 +4,7 @@
 ```powershell
 git submodule add https://github.com/svapre/control-loop-kit.git tooling/control-loop-kit
 git -C tooling/control-loop-kit fetch --tags
-git -C tooling/control-loop-kit checkout v0.3.0
+git -C tooling/control-loop-kit checkout v0.5.1
 ```
 
 ## Required local wrappers
@@ -19,12 +19,27 @@ Each wrapper should:
 ## Add policy file
 Create `.control-loop/policy.json` for project-specific rules.
 
+Create `.control-loop/ai_settings.json` for AI response and process-behavior settings.
+Tune design/static guard strictness in `.control-loop/policy.json` using:
+- `process_guard.design_principle_rules`
+- `process_guard.static_guard_rules`
+
 Default:
 - partial override mode
 
 For full override:
 - set `policy_override.mode` to `full`
 - include waiver metadata (`reason`, `approved_by`, `expires_on`)
+
+Use templates:
+- `docs/AI_SETTINGS_TEMPLATE.json`
+- `docs/CONTEXT_INDEX_TEMPLATE.md`
+- `docs/SESSION_TEMPLATE.md`
+
+Add these project files:
+- `docs/CONTEXT_INDEX.md`
+- `docs/sessions/README.md`
+- `docs/sessions/TEMPLATE.md`
 
 ## CI steps
 1. checkout repo with `submodules: recursive`
@@ -43,4 +58,5 @@ python -m ruff check .
 python -m pytest -q
 python scripts/process_guard.py --mode ci
 python scripts/control_gate.py --mode ci
+python scripts/generate_model_catalog_prompt.py --check
 ```

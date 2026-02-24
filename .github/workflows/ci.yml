@@ -21,6 +21,9 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements-dev.txt
 
+      - name: Generated Prompt Sync
+        run: python scripts/generate_model_catalog_prompt.py --check
+
       - name: Lint
         run: ruff check .
 

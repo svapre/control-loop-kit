@@ -6,6 +6,8 @@ Reusable process-control toolkit for AI-assisted software projects.
 - `control_loop.control_gate`: readiness and CI gate checks.
 - `control_loop.process_guard`: process-governance checks for proposal/design coupling.
 - `control_loop.policy`: policy loading, validation, and override handling.
+- `ai_settings` policy model: response style, approval behavior, and global enforcement switch.
+- model-catalog contract and prompt generator for cross-agent model data collection.
 
 ## Read first
 - Full onboarding (human + AI): `docs/CONTROL_TOOLKIT_GUIDE.md`
@@ -21,7 +23,24 @@ Reusable process-control toolkit for AI-assisted software projects.
 4. Ambiguity stop enforcement:
    - assumptions require confirmation evidence
 5. Work mode enforcement (`routine` / `design`).
+6. Agent-agnostic AI settings support:
+   - `.control-loop/ai_settings.json` merged through policy loader.
+7. Session evidence enforcement:
+   - code/process changes can require a session log update with approval and correction evidence.
+8. Global process switch:
+   - strict mode or advisory mode from AI settings.
+9. Contract-driven model-catalog prompt generation:
+   - contract file: `contracts/model_catalog.contract.json`
+   - generated prompt: `contracts/MODEL_CATALOG_PROMPT.md`
+   - sync check: `python scripts/generate_model_catalog_prompt.py --check`
+10. Design robustness guardrails:
+    - proposal evidence checks for generality/no-hardcoding claims,
+    - per-rule severity (`strict`, `warn`, `manual_review`),
+    - static scans for obvious hardcoding/overfitting signals in changed code.
+11. Phase and scope execution checks:
+    - session markers enforce `think` vs `implement` workflow boundaries,
+    - implementation changes require explicit approval token evidence.
 
 ## Current release
-- `v0.3.0` (policy validation + override control + toolkit self-CI)
+- `v0.5.1` (generic defaults + phase/scope execution controls)
 

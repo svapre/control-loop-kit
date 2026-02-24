@@ -1,5 +1,70 @@
 # Changelog
 
+## v0.5.1
+- Re-based toolkit defaults to stay project-agnostic:
+  - generic proposal field markers (`Validation coverage evidence`, `Single-case exception`),
+  - removed PDF-project-specific defaults from toolkit policy.
+- Added execution-phase governance controls in process guard:
+  - session markers for workflow phase, change scope, and implementation approval token,
+  - `--mode think` enforcement to block implementation/toolkit code edits in think-only runs.
+- Extended policy validation to include `process_guard.execution_phase_rules`.
+- Updated toolkit docs and session template for phase/scope/token markers.
+- Added policy contract test to prevent project-specific marker regressions in toolkit defaults.
+
+## v0.5.0
+- Added policy-driven design robustness checks in `process_guard`:
+  - design principle value checks with per-rule severity (`strict`, `warn`, `manual_review`),
+  - manual-review evidence requirement for declared special-cases.
+- Added static guard scan support for changed implementation files:
+  - regex rules and severity defined in policy,
+  - default rules detect absolute path literals and hardcoded PDF filename literals.
+- Extended default policy with robustness field markers for:
+  - generality scope,
+  - corpus and holdout evidence,
+  - config externalization evidence,
+  - determinism and idempotency evidence.
+- Extended policy validation for:
+  - `design_principle_rules`,
+  - `static_guard_rules`.
+- Updated docs to describe rule-severity and static-guard behavior.
+
+## v0.4.1
+- Added model-catalog contract at `contracts/model_catalog.contract.json`.
+- Added prompt generator and sync checker:
+  - `scripts/generate_model_catalog_prompt.py`
+  - generated artifact `contracts/MODEL_CATALOG_PROMPT.md`
+- Added toolkit CI enforcement for generated prompt sync.
+- Added tests for model-catalog contract routing shape and prompt sync.
+- Updated docs with contract-driven model-catalog workflow.
+
+## v0.4.0
+- Added AI settings model to default policy:
+  - response style settings,
+  - execution behavior settings,
+  - global process switch (`strict` or `advisory`),
+  - session log configuration,
+  - context-management configuration.
+- Added AI settings loader support in `control_loop/policy.py`:
+  - loads `.control-loop/ai_settings.json` by default,
+  - supports env override (`CONTROL_LOOP_AI_SETTINGS_PATH`),
+  - validates AI settings schema and waiver requirements.
+- Extended `process_guard` with:
+  - session-log enforcement for code/process changes,
+  - required approval evidence checks,
+  - failure-to-correction evidence checks,
+  - advisory-mode behavior through global switch.
+- Updated default required artifacts:
+  - `.control-loop/ai_settings.json`,
+  - `docs/CONTEXT_INDEX.md`,
+  - `docs/sessions/README.md`,
+  - `docs/sessions/TEMPLATE.md`.
+- Added toolkit templates:
+  - `docs/AI_SETTINGS_TEMPLATE.json`,
+  - `docs/CONTEXT_INDEX_TEMPLATE.md`,
+  - `docs/SESSION_TEMPLATE.md`.
+- Expanded docs (`README.md`, `docs/CONTROL_TOOLKIT_GUIDE.md`, `docs/QUICKSTART.md`, `docs/POLICY_SCHEMA.md`).
+- Added and extended tests for AI settings and session-enforcement behavior.
+
 ## v0.3.0
 - Added strict policy validation in loader (`control_loop/policy.py`).
 - Added controlled override mechanism:

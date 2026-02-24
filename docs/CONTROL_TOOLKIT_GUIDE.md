@@ -27,6 +27,16 @@ The toolkit provides two executable gates:
 - enforces work-mode declaration (`routine` or `design`)
 - enforces ambiguity stop rule (assumptions need confirmation evidence)
 - enforces process-vs-project guideline markers from policy
+- enforces session evidence requirements when configured
+- enforces execution phase and scope markers (think/implement, project/toolkit)
+- enforces design-principle evidence with per-rule severity (`strict`, `warn`, `manual_review`)
+- runs static guard scans for hardcoding/overfitting signals when configured
+
+The toolkit also provides policy-driven AI behavior settings:
+- response style defaults
+- confirmation-before-change requirement
+- assumption policy
+- global enforcement switch (`strict` or `advisory`)
 
 ## 3) Guarantees and non-guarantees
 ### Guarantees
@@ -66,7 +76,7 @@ Follow these steps in target repository.
 ```powershell
 git submodule add https://github.com/svapre/control-loop-kit.git tooling/control-loop-kit
 git -C tooling/control-loop-kit fetch --tags
-git -C tooling/control-loop-kit checkout v0.3.0
+git -C tooling/control-loop-kit checkout v0.5.1
 ```
 
 ### Step 2: Add local wrappers
@@ -76,6 +86,13 @@ Create `scripts/control_gate.py` and `scripts/process_guard.py` wrappers that im
 
 ### Step 3: Add policy file
 Create `.control-loop/policy.json` in the project root.
+
+Create `.control-loop/ai_settings.json` in the project root (copy from `docs/AI_SETTINGS_TEMPLATE.json`).
+
+Create:
+- `docs/CONTEXT_INDEX.md` (copy from `docs/CONTEXT_INDEX_TEMPLATE.md`)
+- `docs/sessions/README.md`
+- `docs/sessions/TEMPLATE.md` (copy from `docs/SESSION_TEMPLATE.md`)
 
 Recommended policy strategy:
 1. Use partial override by default (`policy_override.mode = "partial"`).
@@ -93,6 +110,11 @@ Policy resolution order:
 Override behavior:
 1. `partial`: deep-merge project override into toolkit base policy.
 2. `full`: replace toolkit base policy with project policy, but only with waiver metadata.
+
+AI settings resolution:
+1. `CONTROL_LOOP_AI_SETTINGS_PATH` environment variable (if set)
+2. `ai_settings_loader.default_path` (default `.control-loop/ai_settings.json`)
+3. toolkit default `ai_settings` values
 
 ### Step 4: Add CI integration
 In CI, include:
@@ -131,6 +153,10 @@ Require:
 - `docs/proposals/TEMPLATE.md`
 - `.github/workflows/ci.yml`
 - `.github/pull_request_template.md`
+- `.control-loop/ai_settings.json`
+- `docs/CONTEXT_INDEX.md`
+- `docs/sessions/README.md`
+- `docs/sessions/TEMPLATE.md`
 
 ## 7) Proposal contract (enforced by process guard when configured)
 Proposals must include:
@@ -174,6 +200,7 @@ It is portable because:
 - pass/fail logic is executable
 - documentation defines mandatory behavior independent of model vendor
 - human approval remains explicit and external
+- session evidence format is file-based, not provider-specific
 
 ## 10) Process vs project guidelines
 The toolkit separates two guideline classes in policy:
@@ -187,3 +214,20 @@ The toolkit separates two guideline classes in policy:
 - examples: deterministic behavior, no hardcoding, fail loudly, traceability
 
 Projects can override either set partially or fully through policy, with guardrails.
+
+## 11) Contract-driven model catalog workflow
+Use these files when you want any AI to return model lists in one required format:
+
+1. Contract source of truth:
+- `contracts/model_catalog.contract.json`
+
+2. Generated prompt artifact:
+- `contracts/MODEL_CATALOG_PROMPT.md`
+
+3. Generator and sync check:
+```powershell
+python scripts/generate_model_catalog_prompt.py --write
+python scripts/generate_model_catalog_prompt.py --check
+```
+
+This keeps prompt text aligned with contract changes. CI fails if the prompt is stale.
