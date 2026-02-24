@@ -49,6 +49,7 @@ The toolkit also provides a control cockpit for focus and planning:
   - `python scripts/validate_backlog.py --check`
   - `python scripts/render_dashboard.py --check`
   - `python scripts/validate_onboarding_docs.py --check`
+  - `python scripts/validate_release_hygiene.py --check --allow-unreleased-latest`
 
 ## 3) Guarantees and non-guarantees
 ### Guarantees
@@ -145,6 +146,7 @@ python scripts/control_gate.py --mode ci
 python scripts/validate_backlog.py --check
 python scripts/render_dashboard.py --check
 python scripts/validate_onboarding_docs.py --check
+python scripts/validate_release_hygiene.py --check --allow-unreleased-latest
 ```
 
 ### Step 6: Enable branch protection (recommended)
