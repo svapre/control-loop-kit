@@ -5,10 +5,18 @@ This document defines the expected shape of `.control-loop/policy.json`.
 ## Top-level object
 ```json
 {
+  "policy_override": {},
   "control_gate": {},
   "process_guard": {}
 }
 ```
+
+## `policy_override` keys
+- `mode`: `"partial"` or `"full"`
+- `waiver`: required if `mode` is `"full"`
+  - `reason`: non-empty string
+  - `approved_by`: non-empty string
+  - `expires_on`: non-empty string
 
 ## `control_gate` keys
 - `required_files`: array of file paths that must exist
@@ -29,6 +37,8 @@ This document defines the expected shape of `.control-loop/policy.json`.
 - `design_update_paths`: array of exact files/prefixes accepted as design update evidence
 - `required_proposal_sections`: array of heading strings
 - `required_proposal_fields`: array of marker strings
+- `process_guideline_fields`: process markers (how work should be executed)
+- `project_guideline_fields`: project quality markers (what output quality is required)
 - `default_branch`: string (for merge-base and diff baseline)
 
 ### Work mode rule
@@ -52,4 +62,3 @@ This document defines the expected shape of `.control-loop/policy.json`.
 
 ## Strict recommendation
 Keep all project-specific process requirements in policy, not in gate code.
-

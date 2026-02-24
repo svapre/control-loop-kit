@@ -4,7 +4,7 @@
 ```powershell
 git submodule add https://github.com/svapre/control-loop-kit.git tooling/control-loop-kit
 git -C tooling/control-loop-kit fetch --tags
-git -C tooling/control-loop-kit checkout v0.2.1
+git -C tooling/control-loop-kit checkout v0.3.0
 ```
 
 ## Required local wrappers
@@ -19,6 +19,13 @@ Each wrapper should:
 ## Add policy file
 Create `.control-loop/policy.json` for project-specific rules.
 
+Default:
+- partial override mode
+
+For full override:
+- set `policy_override.mode` to `full`
+- include waiver metadata (`reason`, `approved_by`, `expires_on`)
+
 ## CI steps
 1. checkout repo with `submodules: recursive`
 2. install dependencies
@@ -27,6 +34,9 @@ Create `.control-loop/policy.json` for project-specific rules.
 5. `python scripts/process_guard.py --mode ci --base-sha ...`
 6. `python scripts/control_gate.py --mode ci`
 
+Toolkit self-check:
+- run toolkit CI (`ruff` + `pytest`) in the toolkit repo itself.
+
 ## Local verification
 ```powershell
 python -m ruff check .
@@ -34,4 +44,3 @@ python -m pytest -q
 python scripts/process_guard.py --mode ci
 python scripts/control_gate.py --mode ci
 ```
-

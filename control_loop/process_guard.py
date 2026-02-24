@@ -89,6 +89,21 @@ def get_changed_proposal_files(changed_files: set[str], policy: dict[str, Any]) 
     return sorted([path for path in changed_files if path.startswith(proposal_root) and path not in ignored])
 
 
+def get_required_proposal_fields(policy: dict[str, Any]) -> list[str]:
+    process_cfg = process_policy(policy)
+    combined: list[str] = []
+    for key in ["required_proposal_fields", "process_guideline_fields", "project_guideline_fields"]:
+        combined.extend(process_cfg.get(key, []))
+
+    deduped: list[str] = []
+    seen: set[str] = set()
+    for item in combined:
+        if item not in seen:
+            deduped.append(item)
+            seen.add(item)
+    return deduped
+
+
 def get_marker_value(text: str, marker: str) -> str:
     for line in text.splitlines():
         if line.strip().lower().startswith(marker.lower()):
@@ -155,7 +170,7 @@ def check_no_assumption_rule(text: str, proposal_file: str, policy: dict[str, An
 def check_proposal_sections(proposal_files: list[str], policy: dict[str, Any]) -> list[str]:
     failures: list[str] = []
     required_sections = process_policy(policy).get("required_proposal_sections", [])
-    required_fields = process_policy(policy).get("required_proposal_fields", [])
+    required_fields = get_required_proposal_fields(policy)
 
     for path in proposal_files:
         proposal_path = Path(path)
@@ -234,7 +249,11 @@ def main() -> int:
     parser.add_argument("--policy", default=None, help="Path to policy JSON override")
     args = parser.parse_args()
 
-    policy = load_policy(args.policy)
+    try:
+        policy = load_policy(args.policy)
+    except Exception as exc:
+        print(f"FAIL: policy load/validation error: {exc}")
+        return 1
     failures: list[str] = []
     warnings: list[str] = []
 
@@ -258,4 +277,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
