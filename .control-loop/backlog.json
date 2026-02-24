@@ -84,7 +84,7 @@
       "id": "BL-005",
       "title": "Release hygiene: align tags with versioned releases and checklist",
       "type": "issue",
-      "status": "active",
+      "status": "closed",
       "roadmap_lane": "now",
       "linked_setpoints": [
         "SP-001"
@@ -95,8 +95,9 @@
       "effort": "medium",
       "priority_score": 50,
       "owner_role": "controller",
-      "next_action": "Create release checklist and publish version tags for post-v0.3.0 releases.",
+      "next_action": "No action. Release checklist, CI release-hygiene checks, and missing historical tags are in place.",
       "acceptance_checks": [
+        "python scripts/validate_release_hygiene.py --check --allow-unreleased-latest",
         "git tag --list",
         "python -m pytest -q"
       ],
@@ -107,7 +108,7 @@
       "id": "BL-006",
       "title": "Automate SP-003 metric collection for issue-to-validated cycle time",
       "type": "future_plan",
-      "status": "planned",
+      "status": "active",
       "roadmap_lane": "next",
       "linked_setpoints": [
         "SP-003"

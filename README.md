@@ -14,6 +14,7 @@ Reusable process-control toolkit for AI-assisted software projects.
 - Full onboarding (human + AI): `docs/CONTROL_TOOLKIT_GUIDE.md`
 - Manual setup quickstart: `docs/QUICKSTART.md`
 - Policy structure reference: `docs/POLICY_SCHEMA.md`
+- Release process: `docs/RELEASE_CHECKLIST.md`
 
 ## Key capabilities
 1. Policy-driven checks (avoid hardcoded project rules in gate logic).
@@ -66,7 +67,9 @@ Reusable process-control toolkit for AI-assisted software projects.
   - `python scripts/render_dashboard.py --write`
 - Validate onboarding doc contract:
   - `python scripts/validate_onboarding_docs.py --check`
+- Validate release hygiene contract:
+  - `python scripts/validate_release_hygiene.py --check --allow-unreleased-latest`
 
 ## Current release
-- `v0.6.3` (contract lifecycle transition state-machine checks)
+- `v0.6.4` (release hygiene checklist + tag alignment automation)
 

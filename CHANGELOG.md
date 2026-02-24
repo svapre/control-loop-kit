@@ -1,5 +1,17 @@
 # Changelog
 
+## v0.6.4
+- Completed BL-005 release hygiene objective:
+  - added release checklist (`docs/RELEASE_CHECKLIST.md`),
+  - added automated release-hygiene validator (`scripts/validate_release_hygiene.py`),
+  - added CI enforcement (`python scripts/validate_release_hygiene.py --check --allow-unreleased-latest`),
+  - backfilled missing release tags for `v0.4.0` through `v0.6.3`.
+- Added release-hygiene contract tests:
+  - `tests/test_release_hygiene_contract.py`.
+- Updated backlog state:
+  - closed BL-005,
+  - activated BL-006 as current focus.
+
 ## v0.6.3
 - Completed BL-002 contract lifecycle state machine enforcement:
   - validates contract status transitions when `.control-loop/contracts.json` changes,

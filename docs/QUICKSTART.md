@@ -68,5 +68,6 @@ python scripts/control_gate.py --mode ci
 python scripts/validate_backlog.py --check
 python scripts/render_dashboard.py --check
 python scripts/validate_onboarding_docs.py --check
+python scripts/validate_release_hygiene.py --check --allow-unreleased-latest
 python scripts/generate_model_catalog_prompt.py --check
 ```
