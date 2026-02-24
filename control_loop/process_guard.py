@@ -651,6 +651,126 @@ def normalize_contract_list(raw: Any, contract_path: Path) -> tuple[list[dict[st
     return contracts, failures
 
 
+def resolve_contract_repo_path(contract_path: Path) -> str:
+    if not contract_path.is_absolute():
+        return contract_path.as_posix()
+    try:
+        relative = contract_path.relative_to(Path.cwd())
+        return relative.as_posix()
+    except ValueError:
+        return contract_path.as_posix()
+
+
+def load_contracts_from_git_ref(base_sha: str, contract_repo_path: str) -> tuple[list[dict[str, Any]], list[str], bool]:
+    """Load contracts file content from a previous git ref.
+
+    Returns: (contracts, failures, exists_in_base)
+    """
+    rc, out, err = run_command(["git", "show", f"{base_sha}:{contract_repo_path}"])
+    if rc != 0:
+        detail = (err or out or "").lower()
+        # Missing in base can be valid for first introduction of contracts.
+        if "does not exist" in detail or "exists on disk" in detail or "path '" in detail:
+            return [], [], False
+        return [], [
+            f"Unable to load contract lifecycle file from base commit '{base_sha}': {err or out}"
+        ], False
+
+    try:
+        data = json.loads(out)
+    except json.JSONDecodeError as exc:
+        return [], [f"Invalid JSON in base contract file {contract_repo_path}: {exc}"], True
+    if not isinstance(data, dict):
+        return [], [f"Base contract file must be an object: {contract_repo_path}"], True
+
+    contracts, failures = normalize_contract_list(data.get("contracts"), Path(contract_repo_path))
+    return contracts, failures, True
+
+
+def contracts_status_map(contracts: list[dict[str, Any]]) -> tuple[dict[str, str], list[str]]:
+    status_by_id: dict[str, str] = {}
+    failures: list[str] = []
+    for idx, item in enumerate(contracts):
+        contract_id = str(item.get("id", "")).strip()
+        if not contract_id:
+            failures.append(f"contracts[{idx}] is missing id.")
+            continue
+        if contract_id in status_by_id:
+            failures.append(f"Duplicate contract id in lifecycle file: {contract_id}")
+            continue
+        status_by_id[contract_id] = str(item.get("status", "")).strip().lower()
+    return status_by_id, failures
+
+
+def check_contract_transition_rules(
+    changed_files: set[str],
+    contracts_current: list[dict[str, Any]],
+    contract_repo_path: str,
+    cfg: dict[str, Any],
+    base_sha: str | None,
+    warnings: list[str] | None = None,
+) -> list[str]:
+    failures: list[str] = []
+    if not bool(cfg.get("enforce_transition_on_contract_change", False)):
+        return failures
+    if contract_repo_path not in changed_files:
+        return failures
+    if not base_sha:
+        if warnings is not None:
+            warnings.append(
+                "Skipping contract transition check because base SHA is unavailable."
+            )
+        return failures
+
+    previous_contracts, previous_failures, exists_in_base = load_contracts_from_git_ref(base_sha, contract_repo_path)
+    failures.extend(previous_failures)
+    if not exists_in_base:
+        return failures
+
+    current_map, current_failures = contracts_status_map(contracts_current)
+    previous_map, previous_map_failures = contracts_status_map(previous_contracts)
+    failures.extend(current_failures)
+    failures.extend(previous_map_failures)
+    if failures:
+        return failures
+
+    transition_map_raw = cfg.get("allowed_transitions", {})
+    transition_map: dict[str, set[str]] = {}
+    if isinstance(transition_map_raw, dict):
+        for source, targets in transition_map_raw.items():
+            if isinstance(source, str) and isinstance(targets, list):
+                transition_map[source.lower()] = {
+                    str(item).lower() for item in targets if isinstance(item, str)
+                }
+
+    removal_allowed_statuses = {
+        str(item).lower() for item in cfg.get("removal_allowed_statuses", ["completed", "cancelled"])
+        if isinstance(item, str)
+    }
+
+    for contract_id, current_status in current_map.items():
+        previous_status = previous_map.get(contract_id)
+        if previous_status is None or previous_status == current_status:
+            continue
+        allowed_targets = transition_map.get(previous_status, set())
+        if current_status not in allowed_targets:
+            failures.append(
+                f"Contract {contract_id} has invalid status transition: "
+                f"{previous_status} -> {current_status}."
+            )
+
+    for contract_id, previous_status in previous_map.items():
+        if contract_id in current_map:
+            continue
+        if previous_status not in removal_allowed_statuses:
+            failures.append(
+                f"Contract {contract_id} was removed from lifecycle file while in "
+                f"non-terminal status '{previous_status}'."
+            )
+
+    return failures
+
+
 def check_contract_base_staleness(base_commit: str, max_commits: int) -> tuple[list[str], list[str]]:
     failures: list[str] = []
     warnings: list[str] = []
@@ -689,6 +809,7 @@ def check_contract_lifecycle_rules(
     policy: dict[str, Any],
     warnings: list[str] | None = None,
     run_mode: str = "ci",
+    base_sha: str | None = None,
 ) -> list[str]:
     cfg = contract_rule_config(policy)
     if not cfg.get("enabled", False):
@@ -704,6 +825,7 @@ def check_contract_lifecycle_rules(
     contract_path = Path(contract_path_raw)
     if not contract_path.is_absolute():
         contract_path = Path.cwd() / contract_path
+    contract_repo_path = resolve_contract_repo_path(Path(contract_path_raw))
 
     data, load_failures = load_contracts_file(contract_path)
     failures: list[str] = list(load_failures)
@@ -736,6 +858,7 @@ def check_contract_lifecycle_rules(
         return [f"Invalid contract id regex in policy: {exc}"]
 
     active: list[dict[str, Any]] = []
+    seen_ids: set[str] = set()
     for idx, item in enumerate(contracts):
         label = f"contracts[{idx}]"
         contract_id = str(item.get("id", "")).strip()
@@ -743,6 +866,9 @@ def check_contract_lifecycle_rules(
 
         if not contract_id_regex.match(contract_id):
             failures.append(f"{label} has invalid contract id '{contract_id}'.")
+        if contract_id in seen_ids:
+            failures.append(f"Duplicate contract id in lifecycle file: {contract_id}")
+        seen_ids.add(contract_id)
         if status not in allowed_statuses:
             failures.append(f"{label} has invalid status '{status}'.")
             continue
@@ -796,6 +922,17 @@ def check_contract_lifecycle_rules(
             if warnings is not None:
                 warnings.extend(base_warnings)
 
+    failures.extend(
+        check_contract_transition_rules(
+            changed_files,
+            contracts,
+            contract_repo_path,
+            cfg,
+            base_sha,
+            warnings,
+        )
+    )
+
     return failures
 
 
@@ -805,6 +942,7 @@ def evaluate_change_coupling(
     warnings: list[str] | None = None,
     manual_reviews: list[str] | None = None,
     run_mode: str = "ci",
+    base_sha: str | None = None,
 ) -> list[str]:
     if policy is None:
         policy = load_policy()
@@ -860,7 +998,7 @@ def evaluate_change_coupling(
 
     failures.extend(check_phase_scope_rules(changed_files, session_files, policy, run_mode))
 
-    failures.extend(check_contract_lifecycle_rules(changed_files, policy, warnings, run_mode))
+    failures.extend(check_contract_lifecycle_rules(changed_files, policy, warnings, run_mode, base_sha))
 
     if run_mode != "think":
         failures.extend(check_static_guard_rules(changed_files, policy, warnings, manual_reviews))
@@ -885,10 +1023,20 @@ def main() -> int:
     manual_reviews: list[str] = []
 
     failures.extend(check_required_process_files(policy))
+    resolved_base = resolve_base_sha(args.base_sha, policy)
     changed_files, diff_warnings = get_changed_files(args.base_sha, policy)
     warnings.extend(diff_warnings)
     if changed_files:
-        failures.extend(evaluate_change_coupling(changed_files, policy, warnings, manual_reviews, args.mode))
+        failures.extend(
+            evaluate_change_coupling(
+                changed_files,
+                policy,
+                warnings,
+                manual_reviews,
+                args.mode,
+                resolved_base,
+            )
+        )
 
     for warning in warnings:
         print(f"WARN: {warning}")

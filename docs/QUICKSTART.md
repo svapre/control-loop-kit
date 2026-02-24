@@ -4,7 +4,7 @@
 ```powershell
 git submodule add https://github.com/svapre/control-loop-kit.git tooling/control-loop-kit
 git -C tooling/control-loop-kit fetch --tags
-git -C tooling/control-loop-kit checkout v0.6.1
+git -C tooling/control-loop-kit checkout v0.6.3
 ```
 
 Before making changes, read `tooling/control-loop-kit/AGENTS.md`.

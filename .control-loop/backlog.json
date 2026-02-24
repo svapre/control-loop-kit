@@ -36,7 +36,7 @@
       "id": "BL-002",
       "title": "Contract lifecycle state machine for execution gating",
       "type": "future_plan",
-      "status": "active",
+      "status": "closed",
       "roadmap_lane": "now",
       "linked_setpoints": [
         "SP-002",
@@ -48,7 +48,7 @@
       "effort": "large",
       "priority_score": 60,
       "owner_role": "thinking_ai",
-      "next_action": "Define contract schema and enforce active-contract scope in process guard.",
+      "next_action": "No action. Contract scope and status-transition lifecycle checks are implemented.",
       "acceptance_checks": [
         "python -m pytest -q tests/test_process_guard_contract.py",
         "python -m pytest -q"
@@ -84,8 +84,8 @@
       "id": "BL-005",
       "title": "Release hygiene: align tags with versioned releases and checklist",
       "type": "issue",
-      "status": "planned",
-      "roadmap_lane": "next",
+      "status": "active",
+      "roadmap_lane": "now",
       "linked_setpoints": [
         "SP-001"
       ],
