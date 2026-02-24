@@ -144,3 +144,28 @@ def test_contract_lifecycle_policy_validation_rejects_invalid_max_commits(tmp_pa
     with pytest.raises(ValueError, match="max_commits_since_base"):
         load_policy(repo_root=tmp_path)
 
+
+def test_contract_lifecycle_policy_validation_rejects_unknown_transition_status(tmp_path: Path):
+    policy_dir = tmp_path / ".control-loop"
+    policy_dir.mkdir(parents=True)
+    (policy_dir / "policy.json").write_text(
+        json.dumps(
+            {
+                "policy_override": {"mode": "partial"},
+                "process_guard": {
+                    "contract_lifecycle_rules": {
+                        "enabled": True,
+                        "allowed_statuses": ["draft", "approved", "active"],
+                        "allowed_transitions": {
+                            "approved": ["active", "unknown-status"]
+                        },
+                    }
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="unknown target statuses"):
+        load_policy(repo_root=tmp_path)
+

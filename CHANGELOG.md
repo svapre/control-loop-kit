@@ -1,5 +1,22 @@
 # Changelog
 
+## v0.6.3
+- Completed BL-002 contract lifecycle state machine enforcement:
+  - validates contract status transitions when `.control-loop/contracts.json` changes,
+  - blocks invalid contract removal unless prior state is terminal,
+  - keeps scope/approval/base-commit checks intact.
+- Extended contract lifecycle policy schema with:
+  - `enforce_transition_on_contract_change`
+  - `allowed_transitions`
+  - `removal_allowed_statuses`
+- Added tests for transition and removal enforcement:
+  - `tests/test_process_guard_contract.py`
+  - `tests/test_policy_contract.py`
+- Updated backlog/roadmap state:
+  - closed BL-002,
+  - activated BL-005 as current focus,
+  - regenerated control dashboard.
+
 ## v0.6.2
 - Added toolkit-level AI entrypoint file:
   - `AGENTS.md` with mandatory read order and pre-change operating rules.

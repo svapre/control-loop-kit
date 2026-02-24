@@ -43,6 +43,7 @@ This document defines the expected shape of `.control-loop/policy.json`.
 - `project_guideline_fields`: project quality markers (what output quality is required)
 - `execution_phase_rules`: session-based phase/scope controls for `think` vs `implement` execution
 - `contract_lifecycle_rules`: active-contract enforcement for controlled implementation scopes
+  including status-transition and removal state-machine checks
 - `default_branch`: string (for merge-base and diff baseline)
 - session checks are controlled via `ai_settings.session_log`
 - `design_principle_rules`: proposal field-value enforcement with per-rule severity (`strict` / `warn` / `manual_review`)
@@ -99,6 +100,13 @@ This document defines the expected shape of `.control-loop/policy.json`.
   "require_approval": true,
   "require_base_commit_validation": true,
   "max_commits_since_base": 60,
+  "enforce_transition_on_contract_change": true,
+  "allowed_transitions": {
+    "approved": ["active", "blocked", "stale", "cancelled"],
+    "active": ["validated", "blocked", "stale", "cancelled"],
+    "validated": ["completed", "active", "stale", "cancelled"]
+  },
+  "removal_allowed_statuses": ["completed", "cancelled"],
   "enforce_prefixes": ["core/", "scripts/", "control_loop/"],
   "enforce_files": ["main.py"],
   "ignore_prefixes": ["docs/"],

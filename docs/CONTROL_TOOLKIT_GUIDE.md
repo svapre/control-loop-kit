@@ -42,6 +42,7 @@ The toolkit also provides a control cockpit for focus and planning:
 - `.control-loop/setpoints.json` for measurable target values
 - `.control-loop/backlog.json` for issues/suggestions/future plans
 - `.control-loop/contracts.json` for active execution contract state
+  and status transitions (state-machine checks)
 - `docs/ROADMAP.md` for `Now / Next / Later` mapping
 - `docs/CONTROL_DASHBOARD.md` generated from source data
 - machine checks:
@@ -81,7 +82,7 @@ Follow these steps in target repository.
 ```powershell
 git submodule add https://github.com/svapre/control-loop-kit.git tooling/control-loop-kit
 git -C tooling/control-loop-kit fetch --tags
-git -C tooling/control-loop-kit checkout v0.6.1
+git -C tooling/control-loop-kit checkout v0.6.3
 ```
 
 ### Step 2: Add local wrappers

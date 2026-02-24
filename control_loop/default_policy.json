@@ -221,6 +221,48 @@
       "require_approval": true,
       "require_base_commit_validation": true,
       "max_commits_since_base": 60,
+      "enforce_transition_on_contract_change": true,
+      "allowed_transitions": {
+        "draft": [
+          "approved",
+          "blocked",
+          "cancelled"
+        ],
+        "approved": [
+          "active",
+          "blocked",
+          "stale",
+          "cancelled"
+        ],
+        "active": [
+          "validated",
+          "blocked",
+          "stale",
+          "cancelled"
+        ],
+        "blocked": [
+          "approved",
+          "active",
+          "stale",
+          "cancelled"
+        ],
+        "stale": [
+          "approved",
+          "cancelled"
+        ],
+        "validated": [
+          "completed",
+          "active",
+          "stale",
+          "cancelled"
+        ],
+        "completed": [],
+        "cancelled": []
+      },
+      "removal_allowed_statuses": [
+        "completed",
+        "cancelled"
+      ],
       "enforce_prefixes": [
         "core/",
         "data_models/",

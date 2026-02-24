@@ -48,6 +48,7 @@ Reusable process-control toolkit for AI-assisted software projects.
 13. Contract lifecycle execution gating:
     - optional active-contract checks for controlled implementation paths,
     - scope, approval, backlog-link, and stale-base validation from policy.
+    - status-transition validation when `.control-loop/contracts.json` changes.
 
 ## Control cockpit files
 - `.control-loop/setpoints.json`
@@ -67,5 +68,5 @@ Reusable process-control toolkit for AI-assisted software projects.
   - `python scripts/validate_onboarding_docs.py --check`
 
 ## Current release
-- `v0.6.2` (AI entrypoint contract + onboarding docs CI guard)
+- `v0.6.3` (contract lifecycle transition state-machine checks)
 

@@ -179,12 +179,14 @@ def validate_process_guard_policy(process_policy: dict[str, Any], context: str) 
             "enforce_files",
             "ignore_prefixes",
             "ignore_files",
+            "removal_allowed_statuses",
         ]:
             _assert_list_of_strings(contract_rules, key, f"{context}.process_guard.contract_lifecycle_rules")
         for key in [
             "require_backlog_item_link",
             "require_approval",
             "require_base_commit_validation",
+            "enforce_transition_on_contract_change",
         ]:
             _assert_bool(contract_rules, key, f"{context}.process_guard.contract_lifecycle_rules")
         if "max_commits_since_base" in contract_rules:
@@ -193,6 +195,39 @@ def validate_process_guard_policy(process_policy: dict[str, Any], context: str) 
                 raise ValueError(
                     f"{context}.process_guard.contract_lifecycle_rules.max_commits_since_base must be a non-negative integer"
                 )
+        allowed_statuses = contract_rules.get("allowed_statuses", [])
+        if isinstance(allowed_statuses, list):
+            allowed_set = {item.lower() for item in allowed_statuses if isinstance(item, str)}
+        else:
+            allowed_set = set()
+        transition_map = contract_rules.get("allowed_transitions")
+        if transition_map is not None:
+            if not isinstance(transition_map, dict):
+                raise ValueError(
+                    f"{context}.process_guard.contract_lifecycle_rules.allowed_transitions must be an object"
+                )
+            for source, targets in transition_map.items():
+                if not isinstance(source, str):
+                    raise ValueError(
+                        f"{context}.process_guard.contract_lifecycle_rules.allowed_transitions keys must be strings"
+                    )
+                if not isinstance(targets, list) or any(not isinstance(item, str) for item in targets):
+                    raise ValueError(
+                        f"{context}.process_guard.contract_lifecycle_rules.allowed_transitions.{source} "
+                        "must be an array of strings"
+                    )
+                if allowed_set and source.lower() not in allowed_set:
+                    raise ValueError(
+                        f"{context}.process_guard.contract_lifecycle_rules.allowed_transitions has "
+                        f"unknown source status '{source}'"
+                    )
+                if allowed_set:
+                    unknown_targets = [item for item in targets if item.lower() not in allowed_set]
+                    if unknown_targets:
+                        raise ValueError(
+                            f"{context}.process_guard.contract_lifecycle_rules.allowed_transitions.{source} "
+                            f"contains unknown target statuses: {unknown_targets}"
+                        )
 
     design_rules = process_policy.get("design_principle_rules")
     if design_rules is not None:

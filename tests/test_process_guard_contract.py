@@ -1,6 +1,8 @@
+import json
 from pathlib import Path
 
 from control_loop.policy import load_policy
+from control_loop import process_guard as process_guard_module
 from control_loop.process_guard import evaluate_change_coupling
 
 
@@ -402,4 +404,189 @@ def test_contract_lifecycle_fails_when_changed_path_is_outside_scope(tmp_path, m
     failures = evaluate_change_coupling({"control_loop/process_guard.py"}, policy)
 
     assert any("outside active contract" in item.lower() for item in failures)
+
+
+def test_contract_lifecycle_fails_invalid_status_transition(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    policy = load_policy(repo_root=tmp_path)
+    contract_cfg = policy.setdefault("process_guard", {}).setdefault("contract_lifecycle_rules", {})
+    contract_cfg.update(
+        {
+            "enabled": True,
+            "contract_path": ".control-loop/contracts.json",
+            "enforce_prefixes": ["control_loop/"],
+            "enforce_files": [],
+            "ignore_prefixes": [],
+            "ignore_files": [],
+            "require_base_commit_validation": False,
+            "enforce_transition_on_contract_change": True,
+            "allowed_transitions": {
+                "approved": ["active"]
+            },
+        }
+    )
+
+    contract_file = Path(".control-loop/contracts.json")
+    contract_file.parent.mkdir(parents=True, exist_ok=True)
+    contract_file.write_text(
+        json.dumps(
+            {
+                "meta": {"schema_version": "1"},
+                "contracts": [
+                    {
+                        "id": "CT-001",
+                        "title": "active contract",
+                        "status": "active",
+                        "approved": True,
+                        "approved_by": "user",
+                        "backlog_item_id": "BL-002",
+                        "base_commit": "HEAD",
+                        "include_paths": ["control_loop/"],
+                        "exclude_paths": [],
+                    },
+                    {
+                        "id": "CT-002",
+                        "title": "test",
+                        "status": "completed",
+                        "approved": True,
+                        "approved_by": "user",
+                        "backlog_item_id": "BL-002",
+                        "base_commit": "HEAD",
+                        "include_paths": ["control_loop/"],
+                        "exclude_paths": [],
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    base_contracts = {
+        "meta": {"schema_version": "1"},
+        "contracts": [
+            {
+                "id": "CT-001",
+                "title": "active contract",
+                "status": "active",
+                "approved": True,
+                "approved_by": "user",
+                "backlog_item_id": "BL-002",
+                "base_commit": "HEAD",
+                "include_paths": ["control_loop/"],
+                "exclude_paths": [],
+            },
+            {
+                "id": "CT-002",
+                "title": "test",
+                "status": "approved",
+                "approved": True,
+                "approved_by": "user",
+                "backlog_item_id": "BL-002",
+                "base_commit": "HEAD",
+                "include_paths": ["control_loop/"],
+                "exclude_paths": [],
+            }
+        ],
+    }
+
+    def fake_run_command(cmd: list[str]) -> tuple[int, str, str]:
+        if cmd[:2] == ["git", "show"]:
+            return 0, json.dumps(base_contracts), ""
+        return 0, "", ""
+
+    monkeypatch.setattr(process_guard_module, "run_command", fake_run_command)
+
+    failures = evaluate_change_coupling(
+        {"control_loop/process_guard.py", ".control-loop/contracts.json"},
+        policy,
+        base_sha="base-ref",
+    )
+
+    assert any("invalid status transition" in item.lower() for item in failures)
+
+
+def test_contract_lifecycle_fails_removal_of_non_terminal_contract(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    policy = load_policy(repo_root=tmp_path)
+    contract_cfg = policy.setdefault("process_guard", {}).setdefault("contract_lifecycle_rules", {})
+    contract_cfg.update(
+        {
+            "enabled": True,
+            "contract_path": ".control-loop/contracts.json",
+            "enforce_prefixes": ["control_loop/"],
+            "enforce_files": [],
+            "ignore_prefixes": [],
+            "ignore_files": [],
+            "require_base_commit_validation": False,
+            "enforce_transition_on_contract_change": True,
+            "removal_allowed_statuses": ["completed", "cancelled"],
+        }
+    )
+
+    contract_file = Path(".control-loop/contracts.json")
+    contract_file.parent.mkdir(parents=True, exist_ok=True)
+    contract_file.write_text(
+        json.dumps(
+            {
+                "meta": {"schema_version": "1"},
+                "contracts": [
+                    {
+                        "id": "CT-001",
+                        "title": "current active",
+                        "status": "active",
+                        "approved": True,
+                        "approved_by": "user",
+                        "backlog_item_id": "BL-002",
+                        "base_commit": "HEAD",
+                        "include_paths": ["control_loop/"],
+                        "exclude_paths": [],
+                    }
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    base_contracts = {
+        "meta": {"schema_version": "1"},
+        "contracts": [
+            {
+                "id": "CT-001",
+                "title": "current active",
+                "status": "active",
+                "approved": True,
+                "approved_by": "user",
+                "backlog_item_id": "BL-002",
+                "base_commit": "HEAD",
+                "include_paths": ["control_loop/"],
+                "exclude_paths": [],
+            },
+            {
+                "id": "CT-002",
+                "title": "removed non-terminal",
+                "status": "approved",
+                "approved": True,
+                "approved_by": "user",
+                "backlog_item_id": "BL-002",
+                "base_commit": "HEAD",
+                "include_paths": ["control_loop/"],
+                "exclude_paths": [],
+            },
+        ],
+    }
+
+    def fake_run_command(cmd: list[str]) -> tuple[int, str, str]:
+        if cmd[:2] == ["git", "show"]:
+            return 0, json.dumps(base_contracts), ""
+        return 0, "", ""
+
+    monkeypatch.setattr(process_guard_module, "run_command", fake_run_command)
+
+    failures = evaluate_change_coupling(
+        {"control_loop/process_guard.py", ".control-loop/contracts.json"},
+        policy,
+        base_sha="base-ref",
+    )
+
+    assert any("removed from lifecycle file" in item.lower() for item in failures)
 
