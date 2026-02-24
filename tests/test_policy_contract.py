@@ -122,3 +122,25 @@ def test_default_policy_remains_project_agnostic():
     assert "- Corpus coverage evidence:" not in project_fields
     assert "- Single-document special case:" not in project_fields
 
+
+def test_contract_lifecycle_policy_validation_rejects_invalid_max_commits(tmp_path: Path):
+    policy_dir = tmp_path / ".control-loop"
+    policy_dir.mkdir(parents=True)
+    (policy_dir / "policy.json").write_text(
+        json.dumps(
+            {
+                "policy_override": {"mode": "partial"},
+                "process_guard": {
+                    "contract_lifecycle_rules": {
+                        "enabled": True,
+                        "max_commits_since_base": -1,
+                    }
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="max_commits_since_base"):
+        load_policy(repo_root=tmp_path)
+

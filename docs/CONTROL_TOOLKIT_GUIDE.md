@@ -41,6 +41,7 @@ The toolkit also provides policy-driven AI behavior settings:
 The toolkit also provides a control cockpit for focus and planning:
 - `.control-loop/setpoints.json` for measurable target values
 - `.control-loop/backlog.json` for issues/suggestions/future plans
+- `.control-loop/contracts.json` for active execution contract state
 - `docs/ROADMAP.md` for `Now / Next / Later` mapping
 - `docs/CONTROL_DASHBOARD.md` generated from source data
 - machine checks:
@@ -102,6 +103,11 @@ Create:
 - `docs/CONTEXT_INDEX.md` (copy from `docs/CONTEXT_INDEX_TEMPLATE.md`)
 - `docs/sessions/README.md`
 - `docs/sessions/TEMPLATE.md` (copy from `docs/SESSION_TEMPLATE.md`)
+- `.control-loop/setpoints.json`
+- `.control-loop/backlog.json`
+- `.control-loop/contracts.json`
+- `docs/ROADMAP.md`
+- `docs/CONTROL_DASHBOARD.md`
 
 Recommended policy strategy:
 1. Use partial override by default (`policy_override.mode = "partial"`).

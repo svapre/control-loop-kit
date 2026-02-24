@@ -155,6 +155,45 @@ def validate_process_guard_policy(process_policy: dict[str, Any], context: str) 
             if key in phase_rules and not isinstance(phase_rules[key], str):
                 raise ValueError(f"{context}.process_guard.execution_phase_rules.{key} must be a string")
 
+    contract_rules = process_policy.get("contract_lifecycle_rules")
+    if contract_rules is not None:
+        if not isinstance(contract_rules, dict):
+            raise ValueError(f"{context}.process_guard.contract_lifecycle_rules must be an object")
+        _assert_bool(contract_rules, "enabled", f"{context}.process_guard.contract_lifecycle_rules")
+        for key in [
+            "contract_path",
+            "id_pattern",
+            "approval_flag_field",
+            "approval_actor_field",
+            "backlog_item_id_field",
+            "base_commit_field",
+            "include_paths_field",
+            "exclude_paths_field",
+        ]:
+            if key in contract_rules and not isinstance(contract_rules[key], str):
+                raise ValueError(f"{context}.process_guard.contract_lifecycle_rules.{key} must be a string")
+        for key in [
+            "allowed_statuses",
+            "active_statuses",
+            "enforce_prefixes",
+            "enforce_files",
+            "ignore_prefixes",
+            "ignore_files",
+        ]:
+            _assert_list_of_strings(contract_rules, key, f"{context}.process_guard.contract_lifecycle_rules")
+        for key in [
+            "require_backlog_item_link",
+            "require_approval",
+            "require_base_commit_validation",
+        ]:
+            _assert_bool(contract_rules, key, f"{context}.process_guard.contract_lifecycle_rules")
+        if "max_commits_since_base" in contract_rules:
+            value = contract_rules["max_commits_since_base"]
+            if not isinstance(value, int) or value < 0:
+                raise ValueError(
+                    f"{context}.process_guard.contract_lifecycle_rules.max_commits_since_base must be a non-negative integer"
+                )
+
     design_rules = process_policy.get("design_principle_rules")
     if design_rules is not None:
         if not isinstance(design_rules, dict):

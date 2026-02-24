@@ -1,14 +1,15 @@
 # Control Dashboard
 
 - Source snapshot: `backlog=2026-02-24, setpoints=2026-02-24`
-- Open backlog items: `3`
+- Open backlog items: `5`
 - Active items: `1`
 - Blocked items: `0`
 - Blocker items: `2`
 
 ## Status Breakdown
 - `active`: `1`
-- `planned`: `1`
+- `closed`: `1`
+- `planned`: `3`
 - `triaged`: `1`
 
 ## Setpoint Health
@@ -19,20 +20,24 @@
 | SP-003 | Median issue-to-validated cycle time (days) | 0 | <= 7 days | unknown |
 
 ## Top Priority Queue
-- `BL-001` (now, score=167): Control cockpit foundation for roadmap and dashboard tracking -> next: Implement backlog/setpoint validators, dashboard renderer, and CI checks.
-- `BL-002` (next, score=60): Contract lifecycle state machine for execution gating -> next: Define contract schema and enforce active-contract scope in process guard.
+- `BL-004` (now, score=167): Protect toolkit master branch with required CI and pull request flow -> next: Enable branch protection policy for master with required verify check and PR-only merges.
+- `BL-002` (now, score=60): Contract lifecycle state machine for execution gating -> next: Define contract schema and enforce active-contract scope in process guard.
+- `BL-005` (next, score=50): Release hygiene: align tags with versioned releases and checklist -> next: Create release checklist and publish version tags for post-v0.3.0 releases.
+- `BL-006` (next, score=30): Automate SP-003 metric collection for issue-to-validated cycle time -> next: Add metric collector script and keep setpoint current_value synchronized from evidence.
 - `BL-003` (later, score=18): AI capability levels and multi-agent coordination plan -> next: Design capability-level schema and lock strategy for concurrent agents.
 
 ## Roadmap Snapshot
 ### Now
-- `BL-001` (active): Control cockpit foundation for roadmap and dashboard tracking
+- `BL-002` (active): Contract lifecycle state machine for execution gating
+- `BL-004` (planned): Protect toolkit master branch with required CI and pull request flow
 ### Next
-- `BL-002` (planned): Contract lifecycle state machine for execution gating
+- `BL-005` (planned): Release hygiene: align tags with versioned releases and checklist
+- `BL-006` (planned): Automate SP-003 metric collection for issue-to-validated cycle time
 ### Later
 - `BL-003` (triaged): AI capability levels and multi-agent coordination plan
 
 ## Immediate Focus
-- `BL-001`: Control cockpit foundation for roadmap and dashboard tracking
+- `BL-004`: Protect toolkit master branch with required CI and pull request flow
 - `BL-002`: Contract lifecycle state machine for execution gating
 
 ## Data Sources

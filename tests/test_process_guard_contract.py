@@ -288,3 +288,118 @@ def test_special_case_requires_manual_review_evidence(tmp_path, monkeypatch):
 
     assert any("manual review evidence" in item.lower() for item in failures)
 
+
+def test_contract_lifecycle_requires_file_for_controlled_changes(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    policy = load_policy(repo_root=tmp_path)
+    contract_cfg = policy.setdefault("process_guard", {}).setdefault("contract_lifecycle_rules", {})
+    contract_cfg.update(
+        {
+            "enabled": True,
+            "contract_path": ".control-loop/contracts.json",
+            "enforce_prefixes": ["control_loop/"],
+            "enforce_files": [],
+            "ignore_prefixes": [],
+            "ignore_files": [],
+            "require_base_commit_validation": False,
+        }
+    )
+
+    failures = evaluate_change_coupling({"control_loop/process_guard.py"}, policy)
+
+    assert any("contract lifecycle file" in item.lower() for item in failures)
+
+
+def test_contract_lifecycle_passes_with_valid_active_contract(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    policy = load_policy(repo_root=tmp_path)
+    contract_cfg = policy.setdefault("process_guard", {}).setdefault("contract_lifecycle_rules", {})
+    contract_cfg.update(
+        {
+            "enabled": True,
+            "contract_path": ".control-loop/contracts.json",
+            "enforce_prefixes": ["control_loop/"],
+            "enforce_files": [],
+            "ignore_prefixes": [],
+            "ignore_files": [],
+            "require_base_commit_validation": False,
+        }
+    )
+
+    contract_file = Path(".control-loop/contracts.json")
+    contract_file.parent.mkdir(parents=True, exist_ok=True)
+    contract_file.write_text(
+        "\n".join(
+            [
+                "{",
+                '  "meta": {"schema_version": "1"},',
+                '  "contracts": [',
+                "    {",
+                '      "id": "CT-001",',
+                '      "title": "test",',
+                '      "status": "active",',
+                '      "approved": true,',
+                '      "approved_by": "user",',
+                '      "backlog_item_id": "BL-002",',
+                '      "base_commit": "HEAD",',
+                '      "include_paths": ["control_loop/"],',
+                '      "exclude_paths": []',
+                "    }",
+                "  ]",
+                "}",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    failures = evaluate_change_coupling({"control_loop/process_guard.py"}, policy)
+
+    assert not failures
+
+
+def test_contract_lifecycle_fails_when_changed_path_is_outside_scope(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    policy = load_policy(repo_root=tmp_path)
+    contract_cfg = policy.setdefault("process_guard", {}).setdefault("contract_lifecycle_rules", {})
+    contract_cfg.update(
+        {
+            "enabled": True,
+            "contract_path": ".control-loop/contracts.json",
+            "enforce_prefixes": ["control_loop/"],
+            "enforce_files": [],
+            "ignore_prefixes": [],
+            "ignore_files": [],
+            "require_base_commit_validation": False,
+        }
+    )
+
+    contract_file = Path(".control-loop/contracts.json")
+    contract_file.parent.mkdir(parents=True, exist_ok=True)
+    contract_file.write_text(
+        "\n".join(
+            [
+                "{",
+                '  "meta": {"schema_version": "1"},',
+                '  "contracts": [',
+                "    {",
+                '      "id": "CT-001",',
+                '      "title": "test",',
+                '      "status": "active",',
+                '      "approved": true,',
+                '      "approved_by": "user",',
+                '      "backlog_item_id": "BL-002",',
+                '      "base_commit": "HEAD",',
+                '      "include_paths": ["control_loop/policy.py"],',
+                '      "exclude_paths": []',
+                "    }",
+                "  ]",
+                "}",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    failures = evaluate_change_coupling({"control_loop/process_guard.py"}, policy)
+
+    assert any("outside active contract" in item.lower() for item in failures)
+

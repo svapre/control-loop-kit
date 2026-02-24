@@ -42,6 +42,7 @@ Add these project files:
 - `docs/sessions/TEMPLATE.md`
 - `.control-loop/setpoints.json`
 - `.control-loop/backlog.json`
+- `.control-loop/contracts.json`
 - `docs/ROADMAP.md`
 - `docs/CONTROL_DASHBOARD.md`
 
