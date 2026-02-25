@@ -1,0 +1,8 @@
+{
+  "meta": {
+    "schema_version": "1",
+    "last_updated": "YYYY-MM-DD",
+    "description": "Execution contracts that gate implementation scope."
+  },
+  "contracts": []
+}

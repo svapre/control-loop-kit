@@ -35,8 +35,37 @@ For full override:
 
 Use templates:
 - `docs/AI_SETTINGS_TEMPLATE.json`
+- `docs/POLICY_TEMPLATE.json`
+- `docs/BACKLOG_TEMPLATE.json`
+- `docs/SETPOINTS_TEMPLATE.json`
+- `docs/CONTRACTS_TEMPLATE.json`
 - `docs/CONTEXT_INDEX_TEMPLATE.md`
 - `docs/SESSION_TEMPLATE.md`
+- `docs/ROADMAP_TEMPLATE.md`
+- `docs/CONTROL_DASHBOARD_TEMPLATE.md`
+
+## New project setup (greenfield)
+Create/copy these starter files in your project root:
+- `.control-loop/policy.json` from `docs/POLICY_TEMPLATE.json`
+- `.control-loop/ai_settings.json` from `docs/AI_SETTINGS_TEMPLATE.json`
+- `.control-loop/backlog.json` from `docs/BACKLOG_TEMPLATE.json`
+- `.control-loop/setpoints.json` from `docs/SETPOINTS_TEMPLATE.json`
+- `.control-loop/contracts.json` from `docs/CONTRACTS_TEMPLATE.json`
+- `docs/ROADMAP.md` from `docs/ROADMAP_TEMPLATE.md`
+- `docs/CONTROL_DASHBOARD.md` from `docs/CONTROL_DASHBOARD_TEMPLATE.md`
+- `docs/CONTEXT_INDEX.md` from `docs/CONTEXT_INDEX_TEMPLATE.md`
+- `docs/sessions/TEMPLATE.md` from `docs/SESSION_TEMPLATE.md`
+
+Replace all `YYYY-MM-DD` placeholders with real dates.
+
+Run verification checks:
+```powershell
+python scripts/validate_backlog.py --check --backlog .control-loop/backlog.json --setpoints .control-loop/setpoints.json --roadmap docs/ROADMAP.md
+python scripts/sync_setpoints.py --check --backlog .control-loop/backlog.json --setpoints .control-loop/setpoints.json
+python scripts/render_dashboard.py --check --backlog .control-loop/backlog.json --setpoints .control-loop/setpoints.json --roadmap docs/ROADMAP.md --dashboard docs/CONTROL_DASHBOARD.md
+python scripts/validate_onboarding_docs.py --check
+python scripts/validate_release_hygiene.py --check --allow-unreleased-latest
+```
 
 Add these project files:
 - `docs/CONTEXT_INDEX.md`
