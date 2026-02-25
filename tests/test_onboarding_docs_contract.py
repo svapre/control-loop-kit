@@ -54,6 +54,12 @@ def test_onboarding_doc_validation_passes_for_default_toolkit_files():
     assert not failures
 
 
+def test_agents_entrypoint_references_gate_suites_doc():
+    root = Path(__file__).resolve().parents[1]
+    agents_text = (root / "AGENTS.md").read_text(encoding="utf-8")
+    assert "docs/GATE_SUITES.md" in agents_text
+
+
 def test_onboarding_doc_validation_fails_when_required_file_missing(tmp_path: Path):
     write_valid_onboarding_files(tmp_path)
     (tmp_path / "docs/QUICKSTART.md").unlink()
