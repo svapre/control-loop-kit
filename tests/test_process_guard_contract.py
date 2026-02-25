@@ -29,6 +29,18 @@ def test_implementation_change_requires_session_log_update():
     assert any("session log update" in item.lower() for item in failures)
 
 
+def test_empty_implementation_targets_use_fallback_classifier(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    policy = load_policy(repo_root=tmp_path)
+    process_cfg = policy["process_guard"]
+    process_cfg["implementation_prefixes"] = []
+    process_cfg["implementation_files"] = []
+
+    failures = evaluate_change_coupling({"src/module.py"}, policy)
+
+    assert any("implementation changed without proposal update" in item.lower() for item in failures)
+
+
 def test_implementation_change_passes_with_proposal_design_and_session(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     policy = load_policy(repo_root=tmp_path)
@@ -315,6 +327,8 @@ def test_contract_lifecycle_requires_file_for_controlled_changes(tmp_path, monke
 def test_contract_lifecycle_passes_with_valid_active_contract(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     policy = load_policy(repo_root=tmp_path)
+    policy["process_guard"]["implementation_prefixes"] = ["core/"]
+    policy["process_guard"]["implementation_files"] = []
     contract_cfg = policy.setdefault("process_guard", {}).setdefault("contract_lifecycle_rules", {})
     contract_cfg.update(
         {
