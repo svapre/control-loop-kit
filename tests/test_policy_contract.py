@@ -123,6 +123,27 @@ def test_default_policy_remains_project_agnostic():
     assert "- Single-document special case:" not in project_fields
 
 
+def test_base_policy_uses_neutral_implementation_targets(tmp_path: Path):
+    policy = load_policy(repo_root=tmp_path)
+    process_cfg = policy["process_guard"]
+    static_cfg = process_cfg["static_guard_rules"]
+    contract_cfg = process_cfg["contract_lifecycle_rules"]
+    session_cfg = policy["ai_settings"]["session_log"]
+
+    assert process_cfg["implementation_prefixes"] == []
+    assert process_cfg["implementation_files"] == []
+    assert static_cfg["include_prefixes"] == []
+    assert static_cfg["include_files"] == []
+    assert "core/" not in contract_cfg["enforce_prefixes"]
+    assert "data_models/" not in contract_cfg["enforce_prefixes"]
+    assert "utils/" not in contract_cfg["enforce_prefixes"]
+    assert "main.py" not in contract_cfg["enforce_files"]
+    assert "core/" not in session_cfg["required_for_prefixes"]
+    assert "data_models/" not in session_cfg["required_for_prefixes"]
+    assert "utils/" not in session_cfg["required_for_prefixes"]
+    assert "main.py" not in session_cfg["required_for_files"]
+
+
 def test_contract_lifecycle_policy_validation_rejects_invalid_max_commits(tmp_path: Path):
     policy_dir = tmp_path / ".control-loop"
     policy_dir.mkdir(parents=True)

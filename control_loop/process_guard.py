@@ -12,6 +12,15 @@ from typing import Any
 from control_loop.policy import load_policy
 
 
+FALLBACK_NON_IMPLEMENTATION_PREFIXES = (
+    ".control-loop/",
+    "docs/",
+    ".github/",
+    "tests/",
+    "contracts/",
+)
+
+
 def run_command(cmd: list[str]) -> tuple[int, str, str]:
     proc = subprocess.run(cmd, capture_output=True, text=True)
     return proc.returncode, proc.stdout.strip(), proc.stderr.strip()
@@ -149,10 +158,18 @@ def get_changed_files(base_sha: str | None, policy: dict[str, Any]) -> tuple[set
     return changed, warnings
 
 
+def is_fallback_implementation_path(path: str) -> bool:
+    if not path:
+        return False
+    return not any(path.startswith(prefix) for prefix in FALLBACK_NON_IMPLEMENTATION_PREFIXES)
+
+
 def is_implementation_path(path: str, policy: dict[str, Any]) -> bool:
     exact_files = set(process_policy(policy).get("implementation_files", []))
     prefixes = tuple(process_policy(policy).get("implementation_prefixes", []))
-    return path in exact_files or any(path.startswith(prefix) for prefix in prefixes)
+    if exact_files or prefixes:
+        return path in exact_files or any(path.startswith(prefix) for prefix in prefixes)
+    return is_fallback_implementation_path(path)
 
 
 def is_toolkit_path(path: str, policy: dict[str, Any]) -> bool:
@@ -165,7 +182,9 @@ def is_session_trigger_path(path: str, policy: dict[str, Any]) -> bool:
     cfg = session_policy(policy)
     exact_files = set(cfg.get("required_for_files", []))
     prefixes = tuple(cfg.get("required_for_prefixes", []))
-    return path in exact_files or any(path.startswith(prefix) for prefix in prefixes)
+    if exact_files or prefixes:
+        return path in exact_files or any(path.startswith(prefix) for prefix in prefixes)
+    return is_implementation_path(path, policy)
 
 
 def static_scan_target(path: str, policy: dict[str, Any]) -> bool:
@@ -177,10 +196,15 @@ def static_scan_target(path: str, policy: dict[str, Any]) -> bool:
     include_files = set(cfg.get("include_files", process_policy(policy).get("implementation_files", [])))
     scan_extensions = {ext.lower() for ext in cfg.get("scan_extensions", [".py"])}
 
-    if path in include_files or any(path.startswith(prefix) for prefix in include_prefixes):
-        suffix = Path(path).suffix.lower()
-        return suffix in scan_extensions
-    return False
+    if include_files or include_prefixes:
+        target = path in include_files or any(path.startswith(prefix) for prefix in include_prefixes)
+    else:
+        target = is_implementation_path(path, policy)
+
+    if not target:
+        return False
+    suffix = Path(path).suffix.lower()
+    return suffix in scan_extensions
 
 
 def get_changed_proposal_files(changed_files: set[str], policy: dict[str, Any]) -> list[str]:
@@ -617,8 +641,12 @@ def contract_target_paths(changed_files: set[str], policy: dict[str, Any]) -> li
     ignore_files = cfg.get("ignore_files", [])
 
     targets: list[str] = []
+    use_fallback = not enforce_files and not enforce_prefixes
     for path in sorted(changed_files):
         if path in ignore_files or path_matches_any(path, ignore_prefixes):
+            continue
+        if use_fallback and is_implementation_path(path, policy):
+            targets.append(path)
             continue
         if path in enforce_files or path_matches_any(path, enforce_prefixes):
             targets.append(path)

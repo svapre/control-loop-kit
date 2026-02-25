@@ -72,14 +72,8 @@
       "docs/sessions/TEMPLATE.md",
       ".github/pull_request_template.md"
     ],
-    "implementation_prefixes": [
-      "core/",
-      "data_models/",
-      "utils/"
-    ],
-    "implementation_files": [
-      "main.py"
-    ],
+    "implementation_prefixes": [],
+    "implementation_files": [],
     "process_controlled_files": [
       "AGENTS.md",
       "SPEC.md",
@@ -264,9 +258,6 @@
         "cancelled"
       ],
       "enforce_prefixes": [
-        "core/",
-        "data_models/",
-        "utils/",
         "scripts/",
         "control_loop/",
         "tests/",
@@ -274,9 +265,7 @@
         ".github/workflows/",
         "tooling/control-loop-kit/"
       ],
-      "enforce_files": [
-        "main.py"
-      ],
+      "enforce_files": [],
       "ignore_prefixes": [
         "docs/"
       ],
@@ -308,14 +297,8 @@
       "scan_extensions": [
         ".py"
       ],
-      "include_prefixes": [
-        "core/",
-        "data_models/",
-        "utils/"
-      ],
-      "include_files": [
-        "main.py"
-      ],
+      "include_prefixes": [],
+      "include_files": [],
       "rules": []
     },
     "default_branch": "master"
@@ -361,15 +344,11 @@
         "docs/sessions/TEMPLATE.md"
       ],
       "required_for_prefixes": [
-        "core/",
-        "data_models/",
-        "utils/",
         "scripts/",
         ".github/workflows/",
         "tooling/control-loop-kit"
       ],
       "required_for_files": [
-        "main.py",
         ".control-loop/policy.json",
         ".control-loop/ai_settings.json",
         ".control-loop/contracts.json"
