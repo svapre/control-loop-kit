@@ -23,6 +23,8 @@ Read these files in order before planning or editing:
 12. `.control-loop/setpoints.json`
 13. `.control-loop/contracts.json`
 
+Gate definitions and promotion criteria: `docs/GATE_SUITES.md`.
+
 ## Operating Rules
 - Work in two phases:
   - think: analyze and propose
