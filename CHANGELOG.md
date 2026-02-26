@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.6.6
+- Added Execution Harness v1:
+  - `start` / `run` / `finalize` commands,
+  - explicit think/implement phase separation for local governance runs.
+- Fixed implementation approval token gating:
+  - implement-phase runs now fail fast when token is missing/blank/mismatched.
+- Fixed latest-session resolution:
+  - `--latest` now excludes ignored session files from policy and resolves only real session logs.
+
 ## v0.6.5
 - Completed BL-006 metric automation objective:
   - added derived setpoint sync script (`scripts/sync_setpoints.py`),
