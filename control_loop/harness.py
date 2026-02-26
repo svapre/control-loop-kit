@@ -16,7 +16,7 @@ from control_loop.policy import load_policy
 
 DEFAULT_SCOPE = "project"
 SESSION_TEMPLATE_PATH = Path("docs/SESSION_TEMPLATE.md")
-SESSION_EXCLUDE = {"README.md", "TEMPLATE.md"}
+DEFAULT_SESSION_IGNORED = {"README.md", "TEMPLATE.md"}
 
 
 @dataclass(frozen=True)
@@ -155,6 +155,26 @@ def session_root_from_policy(policy: dict[str, Any], repo_root: Path) -> Path:
     return path
 
 
+def session_ignored_files(policy: dict[str, Any], repo_root: Path) -> tuple[set[Path], set[str]]:
+    ai_cfg = policy.get("ai_settings", {})
+    session_cfg = ai_cfg.get("session_log", {}) if isinstance(ai_cfg, dict) else {}
+    raw_ignored = session_cfg.get("ignored_files", [])
+    if not isinstance(raw_ignored, list):
+        raw_ignored = []
+
+    ignored_paths: set[Path] = set()
+    ignored_names: set[str] = set(DEFAULT_SESSION_IGNORED)
+    for entry in raw_ignored:
+        if not isinstance(entry, str) or not entry.strip():
+            continue
+        ignored_names.add(Path(entry).name)
+        path = Path(entry)
+        if not path.is_absolute():
+            path = repo_root / path
+        ignored_paths.add(path.resolve())
+    return ignored_paths, ignored_names
+
+
 def resolve_session_path(
     repo_root: Path,
     policy: dict[str, Any],
@@ -168,10 +188,11 @@ def resolve_session_path(
         return candidate
 
     session_root = session_root_from_policy(policy, repo_root)
+    ignored_paths, ignored_names = session_ignored_files(policy, repo_root)
     files = [
         path
         for path in sorted(session_root.glob("*.md"))
-        if path.name not in SESSION_EXCLUDE
+        if path.name not in ignored_names and path.resolve() not in ignored_paths
     ]
     if not files:
         raise ValueError("No session files found. Run harness start first.")
@@ -300,7 +321,30 @@ def command_run(args: argparse.Namespace) -> int:
     results: list[str] = []
     if args.phase == "implement":
         token_field, required_token = required_token_config(policy)
+        required_token = required_token.strip()
         token_value = get_marker_value(lines, token_field)
+        if not required_token:
+            reason = (
+                "policy required implementation token is blank; "
+                "set process_guard.execution_phase_rules.required_implementation_approval_token"
+            )
+            results.append(f"- FAIL | approval_token_check | {reason}")
+            set_marker_block(lines, "- Validation checks run:", results)
+            write_lines(session_path, lines)
+            print(f"FAIL: implementation approval token check failed for {session_path.as_posix()}")
+            print(f"- {reason}")
+            return 1
+        if not token_value:
+            reason = (
+                f"marker '{token_field}' is missing or blank; "
+                f"expected exact token '{required_token}'"
+            )
+            results.append(f"- FAIL | approval_token_check | {reason}")
+            set_marker_block(lines, "- Validation checks run:", results)
+            write_lines(session_path, lines)
+            print(f"FAIL: implementation approval token check failed for {session_path.as_posix()}")
+            print(f"- {reason}")
+            return 1
         if token_value != required_token:
             reason = (
                 f"expected token '{required_token}' in marker '{token_field}', "
@@ -309,7 +353,7 @@ def command_run(args: argparse.Namespace) -> int:
             results.append(f"- FAIL | approval_token_check | {reason}")
             set_marker_block(lines, "- Validation checks run:", results)
             write_lines(session_path, lines)
-            print(f"FAIL: implementation approval token mismatch for {session_path.as_posix()}")
+            print(f"FAIL: implementation approval token check failed for {session_path.as_posix()}")
             print(f"- {reason}")
             return 1
         results.append("- PASS | approval_token_check")

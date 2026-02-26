@@ -80,3 +80,28 @@ def test_harness_implement_passes_with_matching_token(tmp_path: Path, monkeypatc
     text = session.read_text(encoding="utf-8")
     assert "- PASS | approval_token_check" in text
     assert "- PASS | python -m pytest -q" in text
+
+
+def test_resolve_latest_session_ignores_ai_settings_files(tmp_path: Path):
+    session_root = tmp_path / "docs" / "sessions"
+    session_root.mkdir(parents=True, exist_ok=True)
+    (session_root / "README.md").write_text("readme", encoding="utf-8")
+    (session_root / "TEMPLATE.md").write_text("template", encoding="utf-8")
+    real_older = session_root / "2026-02-26-a.md"
+    real_newer = session_root / "2026-02-26-z.md"
+    real_older.write_text("older", encoding="utf-8")
+    real_newer.write_text("newer", encoding="utf-8")
+
+    policy = {
+        "ai_settings": {
+            "session_log": {
+                "root": "docs/sessions/",
+                "ignored_files": [
+                    "docs/sessions/README.md",
+                    "docs/sessions/TEMPLATE.md",
+                ],
+            }
+        }
+    }
+    resolved = harness.resolve_session_path(tmp_path, policy, explicit=None, latest=True)
+    assert resolved == real_newer
