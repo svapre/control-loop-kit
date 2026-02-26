@@ -1,0 +1,75 @@
+{
+  "meta": {
+    "schema_version": "1",
+    "last_updated": "YYYY-MM-DD",
+    "description": "Starter control backlog for governance tracking."
+  },
+  "items": [
+    {
+      "id": "BL-001",
+      "title": "Bootstrap controlled delivery flow",
+      "type": "issue",
+      "status": "active",
+      "roadmap_lane": "now",
+      "linked_setpoints": [
+        "SP-003"
+      ],
+      "is_blocker": true,
+      "expected_error_reduction": "high",
+      "confidence": "medium",
+      "effort": "medium",
+      "priority_score": 100,
+      "owner_role": "controller",
+      "next_action": "Deliver first governed change and record evidence.",
+      "acceptance_checks": [
+        "python scripts/validate_backlog.py --check --backlog .control-loop/backlog.json --setpoints .control-loop/setpoints.json --roadmap docs/ROADMAP.md"
+      ],
+      "created_on": "YYYY-MM-DD",
+      "updated_on": "YYYY-MM-DD"
+    },
+    {
+      "id": "BL-002",
+      "title": "Harden policy and workflow defaults",
+      "type": "future_plan",
+      "status": "planned",
+      "roadmap_lane": "next",
+      "linked_setpoints": [
+        "SP-003"
+      ],
+      "is_blocker": false,
+      "expected_error_reduction": "medium",
+      "confidence": "medium",
+      "effort": "medium",
+      "priority_score": 30,
+      "owner_role": "controller",
+      "next_action": "Refine policy overrides after first cycle.",
+      "acceptance_checks": [
+        "python -m pytest -q"
+      ],
+      "created_on": "YYYY-MM-DD",
+      "updated_on": "YYYY-MM-DD"
+    },
+    {
+      "id": "BL-003",
+      "title": "Plan future automation improvements",
+      "type": "suggestion",
+      "status": "triaged",
+      "roadmap_lane": "later",
+      "linked_setpoints": [
+        "SP-003"
+      ],
+      "is_blocker": false,
+      "expected_error_reduction": "low",
+      "confidence": "medium",
+      "effort": "large",
+      "priority_score": 6,
+      "owner_role": "controller",
+      "next_action": "Collect evidence before scheduling implementation.",
+      "acceptance_checks": [
+        "python -m pytest -q"
+      ],
+      "created_on": "YYYY-MM-DD",
+      "updated_on": "YYYY-MM-DD"
+    }
+  ]
+}

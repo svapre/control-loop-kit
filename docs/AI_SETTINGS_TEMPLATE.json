@@ -35,14 +35,10 @@
       "docs/sessions/TEMPLATE.md"
     ],
     "required_for_prefixes": [
-      "core/",
-      "data_models/",
-      "utils/",
       "scripts/",
       ".github/workflows/"
     ],
     "required_for_files": [
-      "main.py",
       ".control-loop/policy.json",
       ".control-loop/ai_settings.json"
     ],

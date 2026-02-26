@@ -1,0 +1,24 @@
+{
+  "meta": {
+    "schema_version": "1",
+    "last_updated": "YYYY-MM-DD",
+    "description": "Starter control-loop setpoints."
+  },
+  "setpoints": [
+    {
+      "id": "SP-003",
+      "name": "Median issue-to-validated cycle time (days)",
+      "metric": "median_cycle_time_days",
+      "source": "backlog_audit",
+      "current_value": 0.0,
+      "unit": "days",
+      "target": {
+        "operator": "<=",
+        "value": 7
+      },
+      "status": "unknown",
+      "owner_role": "controller",
+      "deadline": "YYYY-MM-DD"
+    }
+  ]
+}
