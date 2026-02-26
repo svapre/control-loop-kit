@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
 from control_loop import harness
 
 
@@ -48,10 +50,11 @@ def write_session(path: Path, token_value: str) -> None:
     )
 
 
-def test_harness_implement_requires_approval_token(tmp_path: Path, monkeypatch):
+@pytest.mark.parametrize("token_value", ["", " ", "none", "N/A"])
+def test_harness_implement_requires_approval_token(tmp_path: Path, monkeypatch, token_value: str):
     monkeypatch.chdir(tmp_path)
     session = tmp_path / "docs" / "sessions" / "2026-02-26-token-missing.md"
-    write_session(session, "")
+    write_session(session, token_value)
 
     def fail_if_called(cmd: tuple[str, ...], repo_root: Path):
         raise AssertionError(f"command runner should not be called: {cmd} @ {repo_root}")
@@ -105,3 +108,24 @@ def test_resolve_latest_session_ignores_ai_settings_files(tmp_path: Path):
     }
     resolved = harness.resolve_session_path(tmp_path, policy, explicit=None, latest=True)
     assert resolved == real_newer
+
+
+def test_resolve_latest_session_fails_when_only_ignored_files(tmp_path: Path):
+    session_root = tmp_path / "docs" / "sessions"
+    session_root.mkdir(parents=True, exist_ok=True)
+    (session_root / "README.md").write_text("readme", encoding="utf-8")
+    (session_root / "TEMPLATE.md").write_text("template", encoding="utf-8")
+    policy = {
+        "ai_settings": {
+            "session_log": {
+                "root": "docs/sessions/",
+                "ignored_files": [
+                    "docs/sessions/README.md",
+                    "docs/sessions/TEMPLATE.md",
+                ],
+            }
+        }
+    }
+
+    with pytest.raises(ValueError, match="No valid session found"):
+        harness.resolve_session_path(tmp_path, policy, explicit=None, latest=True)

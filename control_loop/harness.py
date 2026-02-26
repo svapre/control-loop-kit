@@ -17,6 +17,7 @@ from control_loop.policy import load_policy
 DEFAULT_SCOPE = "project"
 SESSION_TEMPLATE_PATH = Path("docs/SESSION_TEMPLATE.md")
 DEFAULT_SESSION_IGNORED = {"README.md", "TEMPLATE.md"}
+NO_VALID_SESSION_MESSAGE = "No valid session found. Run: python -m control_loop.harness start first."
 
 
 @dataclass(frozen=True)
@@ -155,24 +156,44 @@ def session_root_from_policy(policy: dict[str, Any], repo_root: Path) -> Path:
     return path
 
 
-def session_ignored_files(policy: dict[str, Any], repo_root: Path) -> tuple[set[Path], set[str]]:
+def normalize_path_string(path: Path) -> str:
+    return str(path).replace("\\", "/").lower()
+
+
+def session_ignored_files(policy: dict[str, Any], repo_root: Path) -> tuple[set[str], set[str]]:
     ai_cfg = policy.get("ai_settings", {})
     session_cfg = ai_cfg.get("session_log", {}) if isinstance(ai_cfg, dict) else {}
     raw_ignored = session_cfg.get("ignored_files", [])
     if not isinstance(raw_ignored, list):
         raw_ignored = []
 
-    ignored_paths: set[Path] = set()
-    ignored_names: set[str] = set(DEFAULT_SESSION_IGNORED)
+    ignored_paths: set[str] = set()
+    ignored_rel_paths: set[str] = set()
+    for name in DEFAULT_SESSION_IGNORED:
+        default_path = repo_root / "docs" / "sessions" / name
+        ignored_paths.add(normalize_path_string(default_path.resolve()))
+        ignored_rel_paths.add(f"docs/sessions/{name}".lower())
+
     for entry in raw_ignored:
         if not isinstance(entry, str) or not entry.strip():
             continue
-        ignored_names.add(Path(entry).name)
         path = Path(entry)
+        ignored_rel_paths.add(path.as_posix().lower())
         if not path.is_absolute():
             path = repo_root / path
-        ignored_paths.add(path.resolve())
-    return ignored_paths, ignored_names
+        ignored_paths.add(normalize_path_string(path.resolve()))
+    return ignored_paths, ignored_rel_paths
+
+
+def is_ignored_session_file(path: Path, repo_root: Path, ignored_paths: set[str], ignored_rel_paths: set[str]) -> bool:
+    path_abs = normalize_path_string(path.resolve())
+    if path_abs in ignored_paths:
+        return True
+    try:
+        relative = path.relative_to(repo_root).as_posix().lower()
+    except ValueError:
+        relative = ""
+    return bool(relative and relative in ignored_rel_paths)
 
 
 def resolve_session_path(
@@ -188,14 +209,15 @@ def resolve_session_path(
         return candidate
 
     session_root = session_root_from_policy(policy, repo_root)
-    ignored_paths, ignored_names = session_ignored_files(policy, repo_root)
+    ignored_paths, ignored_rel_paths = session_ignored_files(policy, repo_root)
     files = [
         path
-        for path in sorted(session_root.glob("*.md"))
-        if path.name not in ignored_names and path.resolve() not in ignored_paths
+        for path in session_root.glob("*.md")
+        if not is_ignored_session_file(path, repo_root, ignored_paths, ignored_rel_paths)
     ]
+    files = sorted(files, key=lambda path: (path.stat().st_mtime, path.name))
     if not files:
-        raise ValueError("No session files found. Run harness start first.")
+        raise ValueError(NO_VALID_SESSION_MESSAGE)
     if latest or not explicit:
         return files[-1]
     return files[-1]
@@ -213,6 +235,17 @@ def required_token_config(policy: dict[str, Any]) -> tuple[str, str]:
     )
     required_token = str(phase_cfg.get("required_implementation_approval_token", "APPROVE_IMPLEMENT"))
     return token_field, required_token
+
+
+def session_null_tokens(policy: dict[str, Any]) -> set[str]:
+    ai_cfg = policy.get("ai_settings", {})
+    session_cfg = ai_cfg.get("session_log", {}) if isinstance(ai_cfg, dict) else {}
+    raw = session_cfg.get("null_tokens", ["none", "n/a", "na", ""])
+    if not isinstance(raw, list):
+        raw = ["none", "n/a", "na", ""]
+    tokens = {str(item).strip().lower() for item in raw if isinstance(item, str)}
+    tokens.add("")
+    return tokens
 
 
 def ensure_markers(lines: list[str], markers: list[str]) -> list[str]:
@@ -303,7 +336,11 @@ def command_start(args: argparse.Namespace) -> int:
 def command_run(args: argparse.Namespace) -> int:
     repo_root = discover_repo_root(Path(args.root).resolve() if args.root else None)
     policy = load_policy(repo_root=repo_root)
-    session_path = resolve_session_path(repo_root, policy, args.session, args.latest)
+    try:
+        session_path = resolve_session_path(repo_root, policy, args.session, args.latest)
+    except ValueError as exc:
+        print(f"FAIL: {exc}")
+        return 1
     if not session_path.exists():
         print(f"FAIL: session file not found: {session_path.as_posix()}")
         return 1
@@ -322,7 +359,8 @@ def command_run(args: argparse.Namespace) -> int:
     if args.phase == "implement":
         token_field, required_token = required_token_config(policy)
         required_token = required_token.strip()
-        token_value = get_marker_value(lines, token_field)
+        token_value = get_marker_value(lines, token_field).strip()
+        null_tokens = session_null_tokens(policy)
         if not required_token:
             reason = (
                 "policy required implementation token is blank; "
@@ -334,7 +372,7 @@ def command_run(args: argparse.Namespace) -> int:
             print(f"FAIL: implementation approval token check failed for {session_path.as_posix()}")
             print(f"- {reason}")
             return 1
-        if not token_value:
+        if not token_value or token_value.lower() in null_tokens:
             reason = (
                 f"marker '{token_field}' is missing or blank; "
                 f"expected exact token '{required_token}'"
@@ -385,7 +423,11 @@ def command_run(args: argparse.Namespace) -> int:
 def command_finalize(args: argparse.Namespace) -> int:
     repo_root = discover_repo_root(Path(args.root).resolve() if args.root else None)
     policy = load_policy(repo_root=repo_root)
-    session_path = resolve_session_path(repo_root, policy, args.session, args.latest)
+    try:
+        session_path = resolve_session_path(repo_root, policy, args.session, args.latest)
+    except ValueError as exc:
+        print(f"FAIL: {exc}")
+        return 1
     if not session_path.exists():
         print(f"FAIL: session file not found: {session_path.as_posix()}")
         return 1
