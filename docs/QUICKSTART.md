@@ -101,3 +101,15 @@ python scripts/validate_onboarding_docs.py --check
 python scripts/validate_release_hygiene.py --check --allow-unreleased-latest
 python scripts/generate_model_catalog_prompt.py --check
 ```
+
+## Execution Harness v1
+Use harness commands to create session evidence and run phase-specific checks locally.
+
+```powershell
+python -m control_loop.harness start --phase think --task "plan next change"
+python -m control_loop.harness run --phase think --latest
+
+python -m control_loop.harness start --phase implement --task "apply approved change"
+python -m control_loop.harness run --phase implement --latest
+python -m control_loop.harness finalize --latest --result pass --note "completed"
+```
