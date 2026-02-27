@@ -8,10 +8,115 @@ env:
   STAGE0_TAG: v0.6.6
 
 jobs:
-  # ── Stage0 Governance (THE JUDGE) ──────────────────────────────
+  detect-governance-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      governance_changed: ${{ steps.detect.outputs.governance_changed }}
+      changed_governance_files: ${{ steps.detect.outputs.changed_governance_files }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect governance-file changes
+        id: detect
+        shell: bash
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" != "pull_request" ]; then
+            echo "governance_changed=false" >> "$GITHUB_OUTPUT"
+            echo "changed_governance_files=" >> "$GITHUB_OUTPUT"
+            echo "Non-PR event: governance approval gate not required."
+            exit 0
+          fi
+
+          python - <<'PY'
+          import json
+          import os
+          import subprocess
+          from pathlib import Path
+
+          base_sha = os.environ["BASE_SHA"]
+          head_sha = os.environ["HEAD_SHA"]
+          out_path = Path(os.environ["GITHUB_OUTPUT"])
+
+          changed_files = subprocess.check_output(
+              ["git", "diff", "--name-only", base_sha, head_sha],
+              text=True,
+          ).splitlines()
+
+          def governance_files_from_policy(data):
+              if not isinstance(data, dict):
+                  return set()
+
+              authority = data.get("governance_human_authority_rule", {})
+              if isinstance(authority, dict):
+                  files = authority.get("governance_files", [])
+                  if isinstance(files, list):
+                      return {item for item in files if isinstance(item, str) and item.strip()}
+
+              amendment = data.get("governance_amendment_rule", {})
+              if isinstance(amendment, dict):
+                  files = amendment.get("governance_files", [])
+                  if isinstance(files, list):
+                      return {item for item in files if isinstance(item, str) and item.strip()}
+              return set()
+
+          head_policy = json.loads(Path(".control-loop/policy.json").read_text(encoding="utf-8"))
+
+          base_policy = {}
+          show = subprocess.run(
+              ["git", "show", f"{base_sha}:.control-loop/policy.json"],
+              capture_output=True,
+              text=True,
+          )
+          if show.returncode == 0:
+              try:
+                  loaded = json.loads(show.stdout)
+                  if isinstance(loaded, dict):
+                      base_policy = loaded
+              except json.JSONDecodeError:
+                  pass
+
+          governance_files = governance_files_from_policy(head_policy) | governance_files_from_policy(base_policy)
+          changed_governance = sorted(set(changed_files) & governance_files)
+          changed_flag = "true" if changed_governance else "false"
+          changed_str = ",".join(changed_governance)
+
+          with out_path.open("a", encoding="utf-8") as handle:
+              handle.write(f"governance_changed={changed_flag}\n")
+              handle.write(f"changed_governance_files={changed_str}\n")
+
+          print(f"governance_changed={changed_flag}")
+          if changed_governance:
+              print("changed_governance_files=" + changed_str)
+          PY
+
+  governance-human-approval:
+    needs: detect-governance-changes
+    if: ${{ github.event_name == 'pull_request' && needs.detect-governance-changes.outputs.governance_changed == 'true' }}
+    runs-on: ubuntu-latest
+    environment:
+      name: governance-amendment
+    steps:
+      - name: Await human governance approval
+        run: |
+          echo "Governance files changed:"
+          echo "${{ needs.detect-governance-changes.outputs.changed_governance_files }}"
+          echo "Awaiting environment approval by configured human authority."
+
+  # Stage0 Governance (THE JUDGE)
   # Frozen, trusted toolkit runs its gates on the PR code.
   # This job is the merge-blocking authority.
   stage0-governance:
+    needs:
+      - detect-governance-changes
+      - governance-human-approval
+    if: ${{ github.event_name == 'pull_request' && always() && needs.detect-governance-changes.result == 'success' && (needs.governance-human-approval.result == 'success' || needs.governance-human-approval.result == 'skipped') }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout PR code
@@ -33,8 +138,8 @@ jobs:
         run: python -m pip install -r /tmp/stage0/requirements-dev.txt
 
       # NOTE: Run individual Stage0 gates explicitly because v0.6.6 pre-dates
-      # run_gate_suite.py. When Stage0 is promoted to >=v0.7.0, replace these
-      # with: cd /tmp/stage0 && python scripts/run_gate_suite.py --suite stage0
+      # run_gate_suite.py. After v0.7.0 is tagged and pushed, switch to:
+      # python /tmp/stage0/scripts/run_gate_suite.py --suite stage0 --target-root "$GITHUB_WORKSPACE"
       - name: "Stage0: Prompt Sync"
         run: python /tmp/stage0/scripts/generate_model_catalog_prompt.py --check
 
@@ -50,14 +155,18 @@ jobs:
       - name: "Stage0: Tests"
         run: python -m pytest -q
 
-  # ── State Government (TOOLKIT SELF-GOVERNANCE) ──────────────────
+  # State Government (TOOLKIT SELF-GOVERNANCE)
   # The toolkit's own CI enforces BOTH national laws (from default_policy.json)
   # and its state laws (.control-loop/policy.json) on every PR.
   # This makes the toolkit a proper consumer of its own governance.
   # control_gate: strict (static artifact checks must pass)
-  # process_guard: advisory (reports violations, doesn't block yet —
-  #   bootstrap period while session/proposal docs are established)
+  # process_guard: advisory (reports violations, does not block yet -
+  # bootstrap period while session/proposal docs are established)
   verify:
+    needs:
+      - detect-governance-changes
+      - governance-human-approval
+    if: ${{ github.event_name == 'pull_request' && always() && needs.detect-governance-changes.result == 'success' && (needs.governance-human-approval.result == 'success' || needs.governance-human-approval.result == 'skipped') }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -96,10 +205,15 @@ jobs:
       - name: Control-Loop Integrity Check
         run: python scripts/verify_control_loop.py --check
 
-      - name: Control Gate (state government — artifact compliance)
+      - name: Governance Human Authority Check
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python scripts/verify_governance_authority.py --check
+
+      - name: Control Gate (state government - artifact compliance)
         run: python -m control_loop.control_gate --mode ci
 
-      - name: Process Guard (state government — process compliance, advisory)
+      - name: Process Guard (state government - process compliance, advisory)
         # Advisory mode: reports violations without blocking.
         # Switch to strict (remove `|| true`) once session/proposal docs
         # are bootstrapped for the toolkit's own changes.
@@ -110,5 +224,3 @@ jobs:
 
       - name: Test
         run: python -m pytest -q
-
-

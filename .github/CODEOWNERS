@@ -1,0 +1,10 @@
+# Governance and constitutional files
+control_loop/default_policy.json @svapre
+control_loop/policy.py @svapre
+control_loop/process_guard.py @svapre
+control_loop/control_gate.py @svapre
+scripts/verify_control_loop.py @svapre
+scripts/verify_governance_authority.py @svapre
+scripts/run_gate_suite.py @svapre
+.github/workflows/ci.yml @svapre
+.control-loop/policy.json @svapre

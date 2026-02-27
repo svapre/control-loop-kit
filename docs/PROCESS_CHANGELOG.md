@@ -2,6 +2,33 @@
 
 This log tracks changes to control-system process, policy, and governance artifacts.
 
+## 2026-02-27 - Machine-verifiable governance authority gate
+- Added `scripts/verify_governance_authority.py`:
+  - checks pull request metadata via GitHub API,
+  - enforces that governance-file changes have qualifying approval authority,
+  - evaluates against effective base+head policy config so a PR cannot disable authority checks and bypass review.
+- Added `governance_human_authority_rule` policy block:
+  - schema validation in `control_loop/policy.py`,
+  - default shape in `control_loop/default_policy.json`,
+  - enabled project override in `.control-loop/policy.json`.
+- Wired CI enforcement in `verify` job:
+  - new step `Governance Human Authority Check` with `GITHUB_TOKEN`.
+- Added interactive approval gate in CI:
+  - `detect-governance-changes` computes governance-file changes from base+head policy union.
+  - `governance-human-approval` pauses in GitHub Environment `governance-amendment` for human approval.
+  - `stage0-governance` and `verify` proceed only after approval or when the gate is not applicable.
+  - merge-blocking jobs are restricted to `pull_request` events so push-run statuses cannot satisfy required checks prematurely.
+- Disabled this repository's legacy token-based governance-amendment gate (`governance_amendment_rule.enabled=false`).
+- Added sole-contributor authority profile support:
+  - policy key `authority_bypass_requires_pr_marker`,
+  - verifier accepts configured self-bypass without marker text when enabled,
+  - used with mandatory interactive environment approval to avoid self-review deadlock.
+- Added contract tests:
+  - `tests/test_governance_authority_contract.py`,
+  - policy validation tests in `tests/test_policy_contract.py`.
+- Added `.github/CODEOWNERS` mapping for governance/constitutional files (effective when code-owner review is enabled in branch protection).
+- Updated policy and gate-suite docs for the new rule and check.
+
 ## 2026-02-24 - Toolkit location decoupled from project repository
 - Removed toolkit submodule from this repository (`tooling/control-loop-kit`).
 - Updated wrappers to resolve toolkit in this order:

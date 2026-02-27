@@ -99,21 +99,36 @@ Consumer projects (state governments) can only create and enforce their own stat
 National governance files (`control_loop/default_policy.json`,
 `control_loop/process_guard.py`, `control_loop/control_gate.py`, etc.)
 exist only in the toolkit repo. Consumer projects never have copies of these
-files in their own repos — they import the toolkit as a dependency. A consumer
+files in their own repos - they import the toolkit as a dependency. A consumer
 project has no filesystem path to modify the national law, so the separation
 is structural, not just policy.
 
 ### Constitutional Amendment Gate
 
 Any change to a national governance file (as listed in
-`governance_amendment_rule.governance_files` in `.control-loop/policy.json`)
+`governance_human_authority_rule.governance_files` in `.control-loop/policy.json`)
 requires **mandatory human approval** before merging:
 
-1. The session log must contain: `- Governance change token: GOVERNANCE_CHANGE`
-2. The session log must contain non-empty: `- Governance review evidence: <human sign-off>`
+1. CI detects governance-file changes using the union of base and head policy
+   governance lists (so a PR cannot remove protection by editing policy first).
+2. CI pauses at job `governance-human-approval` in GitHub Environment
+   `governance-amendment`.
+3. The required human reviewer must approve in the GitHub UI.
+4. `scripts/verify_governance_authority.py --check` verifies qualifying PR
+   approval on the latest commit for configured approver(s).
 
-Without both, `process_guard` blocks the merge. This is enforced in CI.
+Without approval, required checks cannot complete and merge remains blocked.
 The AI may propose and draft governance changes, but cannot land them alone.
+
+Token text in session logs is not treated as constitutional approval in this
+repository. Approval is interactive and out-of-band in GitHub controls.
+
+Sole-contributor mode:
+- GitHub does not allow approving your own pull request.
+- For repos with one human maintainer, policy can enable authority bypass
+  without marker text (`allow_pr_authority_bypass=true`,
+  `authority_bypass_requires_pr_marker=false`) while still requiring
+  interactive environment approval.
 
 ### Conflicting-Change Detection (deferred)
 

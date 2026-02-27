@@ -50,6 +50,10 @@ Reusable process-control toolkit for AI-assisted software projects.
     - optional active-contract checks for controlled implementation paths,
     - scope, approval, backlog-link, and stale-base validation from policy.
     - status-transition validation when `.control-loop/contracts.json` changes.
+14. Interactive constitutional approval gate:
+    - governance-file PRs pause in GitHub Environment `governance-amendment`,
+    - merge-blocking jobs resume only after explicit human approval,
+    - authority check verifies reviewer approval on latest PR commit.
 
 ## Control cockpit files
 - `.control-loop/setpoints.json`
@@ -73,7 +77,9 @@ Reusable process-control toolkit for AI-assisted software projects.
   - `python scripts/validate_onboarding_docs.py --check`
 - Validate release hygiene contract:
   - `python scripts/validate_release_hygiene.py --check --allow-unreleased-latest`
+- Validate governance human-authority gate wiring (CI PR context):
+  - `python scripts/verify_governance_authority.py --check`
 
 ## Current release
-- `v0.6.5` (SP-003 metric automation + CI setpoint sync check)
+- `v0.7.0` (unreleased candidate: Stage0 suite runner promotion + control-loop integrity + constitutional amendment gate)
 
