@@ -81,5 +81,5 @@ Reusable process-control toolkit for AI-assisted software projects.
   - `python scripts/verify_governance_authority.py --check`
 
 ## Current release
-- `v0.7.0` (unreleased candidate: Stage0 suite runner promotion + control-loop integrity + constitutional amendment gate)
+- `v0.7.0` (released: Stage0 suite runner promotion + control-loop integrity + constitutional amendment gate)
 
