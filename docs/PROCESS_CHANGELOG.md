@@ -2,6 +2,15 @@
 
 This log tracks changes to control-system process, policy, and governance artifacts.
 
+## 2026-02-27 - Stage0 v0.7.0 activation in CI
+- Published release tag `v0.7.0` from `master`.
+- Updated CI Stage0 controller pin:
+  - `.github/workflows/ci.yml` now sets `STAGE0_TAG: v0.7.0`.
+- Switched Stage0 execution to suite-runner mode:
+  - replaced per-command Stage0 checks with
+    `python /tmp/stage0/scripts/run_gate_suite.py --suite stage0 --target-root "$GITHUB_WORKSPACE"`.
+- Result: merge-blocking Stage0 governance now runs the trusted frozen suite from the v0.7.0 controller.
+
 ## 2026-02-27 - Machine-verifiable governance authority gate
 - Added `scripts/verify_governance_authority.py`:
   - checks pull request metadata via GitHub API,
