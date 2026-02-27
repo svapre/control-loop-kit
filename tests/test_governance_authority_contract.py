@@ -30,6 +30,7 @@ def _config(**kwargs) -> dict:
         "minimum_approvals": 1,
         "require_approval_on_latest_commit": True,
         "allow_pr_authority_bypass": False,
+        "authority_bypass_requires_pr_marker": True,
         "pr_authority_bypass_field": "- Governance authority sign-off:",
         "pr_authority_bypass_token": "OWNER_APPROVED",
         "require_human_reviewers": True,
@@ -136,6 +137,20 @@ def test_authority_bypass_missing_marker_still_fails() -> None:
     assert not warns
 
 
+def test_authority_bypass_without_marker_passes_when_marker_not_required() -> None:
+    fails, warns = evaluate_governance_authority(
+        {"control_loop/default_policy.json"},
+        [],
+        _config(allow_pr_authority_bypass=True, authority_bypass_requires_pr_marker=False),
+        head_sha="headsha",
+        pr_author="svapre",
+        pr_body="",
+        repo_owner="svapre",
+    )
+    assert not fails
+    assert warns
+
+
 def test_bot_approval_is_ignored_when_human_required() -> None:
     fails, warns = evaluate_governance_authority(
         {"control_loop/default_policy.json"},
@@ -166,19 +181,22 @@ def test_merge_keeps_base_enabled_rule_active() -> None:
     assert merged["required_approvers"] == ["svapre"]
 
 
-def test_merge_does_not_allow_head_to_enable_bypass_if_base_disables_it() -> None:
+def test_merge_uses_current_bypass_settings_in_governance_pr() -> None:
     merged = _merge_authority_config(
         {
             "enabled": True,
             "required_approvers": ["svapre"],
             "minimum_approvals": 1,
             "allow_pr_authority_bypass": True,
+            "authority_bypass_requires_pr_marker": False,
         },
         {
             "enabled": True,
             "required_approvers": ["svapre"],
             "minimum_approvals": 1,
             "allow_pr_authority_bypass": False,
+            "authority_bypass_requires_pr_marker": True,
         },
     )
-    assert merged["allow_pr_authority_bypass"] is False
+    assert merged["allow_pr_authority_bypass"] is True
+    assert merged["authority_bypass_requires_pr_marker"] is False

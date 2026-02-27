@@ -19,6 +19,10 @@ This log tracks changes to control-system process, policy, and governance artifa
   - `stage0-governance` and `verify` proceed only after approval or when the gate is not applicable.
   - merge-blocking jobs are restricted to `pull_request` events so push-run statuses cannot satisfy required checks prematurely.
 - Disabled this repository's legacy token-based governance-amendment gate (`governance_amendment_rule.enabled=false`).
+- Added sole-contributor authority profile support:
+  - policy key `authority_bypass_requires_pr_marker`,
+  - verifier accepts configured self-bypass without marker text when enabled,
+  - used with mandatory interactive environment approval to avoid self-review deadlock.
 - Added contract tests:
   - `tests/test_governance_authority_contract.py`,
   - policy validation tests in `tests/test_policy_contract.py`.

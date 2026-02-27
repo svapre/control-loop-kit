@@ -230,3 +230,23 @@ def test_governance_human_authority_rule_rejects_non_list_approvers(tmp_path: Pa
     with pytest.raises(ValueError, match="required_approvers"):
         load_policy(repo_root=tmp_path)
 
+
+def test_governance_human_authority_rule_rejects_non_bool_marker_bypass_flag(tmp_path: Path):
+    policy_dir = tmp_path / ".control-loop"
+    policy_dir.mkdir(parents=True)
+    (policy_dir / "policy.json").write_text(
+        json.dumps(
+            {
+                "policy_override": {"mode": "partial"},
+                "governance_human_authority_rule": {
+                    "enabled": True,
+                    "authority_bypass_requires_pr_marker": "no",
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="authority_bypass_requires_pr_marker"):
+        load_policy(repo_root=tmp_path)
+

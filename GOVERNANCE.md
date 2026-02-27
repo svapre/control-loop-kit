@@ -123,6 +123,13 @@ The AI may propose and draft governance changes, but cannot land them alone.
 Token text in session logs is not treated as constitutional approval in this
 repository. Approval is interactive and out-of-band in GitHub controls.
 
+Sole-contributor mode:
+- GitHub does not allow approving your own pull request.
+- For repos with one human maintainer, policy can enable authority bypass
+  without marker text (`allow_pr_authority_bypass=true`,
+  `authority_bypass_requires_pr_marker=false`) while still requiring
+  interactive environment approval.
+
 ### Conflicting-Change Detection (deferred)
 
 An amendment that weakens or removes an existing national rule (e.g., disabling

@@ -122,6 +122,7 @@ def evaluate_governance_authority(
     require_latest = bool(config.get("require_approval_on_latest_commit", True))
     require_human = bool(config.get("require_human_reviewers", True))
     allow_authority_bypass = bool(config.get("allow_pr_authority_bypass", False))
+    bypass_requires_marker = bool(config.get("authority_bypass_requires_pr_marker", True))
     bypass_field = str(config.get("pr_authority_bypass_field", "- Governance authority sign-off:"))
     bypass_token = str(config.get("pr_authority_bypass_token", "OWNER_APPROVED"))
 
@@ -170,6 +171,14 @@ def evaluate_governance_authority(
 
     normalized_author = _normalize_login(pr_author)
     if allow_authority_bypass and normalized_author in required_approvers:
+        if not bypass_requires_marker:
+            warnings.append(
+                "No qualifying reviewer approval found. "
+                "Accepted authority self-bypass for PR author based on policy "
+                "(authority_bypass_requires_pr_marker=false)."
+            )
+            return failures, warnings
+
         bypass_value = _get_marker_value(pr_body or "", bypass_field).strip()
         if bypass_value == bypass_token:
             warnings.append(
@@ -185,10 +194,11 @@ def evaluate_governance_authority(
         f"Qualifying approvals found: {len(qualifying_approvals)}/{min_approvals}."
     )
     if allow_authority_bypass and normalized_author in required_approvers:
-        failures.append(
-            "Authority self-bypass is enabled, but PR body does not contain required marker: "
-            f"'{bypass_field} {bypass_token}'."
-        )
+        if bypass_requires_marker:
+            failures.append(
+                "Authority self-bypass is enabled, but PR body does not contain required marker: "
+                f"'{bypass_field} {bypass_token}'."
+            )
     return failures, warnings
 
 
@@ -274,9 +284,16 @@ def _merge_authority_config(current_cfg: dict[str, Any], base_cfg: dict[str, Any
         merged["require_human_reviewers"] = _bool_from(
             current_cfg, "require_human_reviewers", True
         ) or _bool_from(base_cfg, "require_human_reviewers", True)
+        # Use current bypass settings because this job is already behind the
+        # interactive environment approval gate for governance changes.
         merged["allow_pr_authority_bypass"] = _bool_from(
             current_cfg, "allow_pr_authority_bypass", False
-        ) and _bool_from(base_cfg, "allow_pr_authority_bypass", False)
+        )
+        merged["authority_bypass_requires_pr_marker"] = _bool_from(
+            current_cfg,
+            "authority_bypass_requires_pr_marker",
+            _bool_from(base_cfg, "authority_bypass_requires_pr_marker", True),
+        )
 
         approvers = set(_string_list(current_cfg.get("required_approvers")))
         approvers.update(_string_list(base_cfg.get("required_approvers")))
@@ -288,6 +305,9 @@ def _merge_authority_config(current_cfg: dict[str, Any], base_cfg: dict[str, Any
         )
         merged["require_human_reviewers"] = _bool_from(current_cfg, "require_human_reviewers", True)
         merged["allow_pr_authority_bypass"] = _bool_from(current_cfg, "allow_pr_authority_bypass", False)
+        merged["authority_bypass_requires_pr_marker"] = _bool_from(
+            current_cfg, "authority_bypass_requires_pr_marker", True
+        )
         merged["required_approvers"] = _string_list(current_cfg.get("required_approvers"))
 
     merged["pr_authority_bypass_field"] = str(

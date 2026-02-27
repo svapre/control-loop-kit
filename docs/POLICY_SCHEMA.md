@@ -72,14 +72,20 @@ This document defines the expected shape of `.control-loop/policy.json`.
 - `minimum_approvals`: integer >= 1
 - `require_approval_on_latest_commit`: boolean
 - `allow_pr_authority_bypass`: boolean (optional; keep `false` for strict interactive approval flow)
+- `authority_bypass_requires_pr_marker`: boolean (when `false`, bypass does not require PR-body marker text)
 - `pr_authority_bypass_field`: PR body marker for authority self-signoff (used only when bypass enabled)
 - `pr_authority_bypass_token`: required value for self-signoff marker (used only when bypass enabled)
 - `require_human_reviewers`: boolean (ignore bot approvals when true)
 
 Recommended for production governance:
 - keep `governance_human_authority_rule.enabled=true`
-- keep `allow_pr_authority_bypass=false`
+- keep `allow_pr_authority_bypass=false` for multi-human teams
 - enforce interactive human approval with GitHub Environment reviewers in CI
+
+Sole-contributor profile (GitHub cannot approve own PR):
+- set `allow_pr_authority_bypass=true`
+- set `authority_bypass_requires_pr_marker=false`
+- keep interactive Environment approval required in CI (`governance-amendment`)
 
 ### Work mode rule
 ```json

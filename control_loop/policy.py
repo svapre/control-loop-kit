@@ -430,6 +430,7 @@ def validate_governance_human_authority_rule(rule: dict[str, Any], context: str)
     _assert_list_of_strings(rule, "required_approvers", f"{context}.governance_human_authority_rule")
     _assert_bool(rule, "require_approval_on_latest_commit", f"{context}.governance_human_authority_rule")
     _assert_bool(rule, "allow_pr_authority_bypass", f"{context}.governance_human_authority_rule")
+    _assert_bool(rule, "authority_bypass_requires_pr_marker", f"{context}.governance_human_authority_rule")
     _assert_bool(rule, "require_human_reviewers", f"{context}.governance_human_authority_rule")
 
     if "minimum_approvals" in rule:
