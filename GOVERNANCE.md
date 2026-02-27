@@ -89,3 +89,41 @@ Default branch may only receive merges where all pass:
 2. Define technical terms and acronyms on first use unless user asks for expert shorthand.
 3. Describe any design-parameter violation in plain language with mitigation.
 
+## Constitutional Law-Making Authority
+
+The toolkit repo holds the exclusive right to amend national (default) law.
+Consumer projects (state governments) can only create and enforce their own state laws.
+
+### Why this is architecturally enforced
+
+National governance files (`control_loop/default_policy.json`,
+`control_loop/process_guard.py`, `control_loop/control_gate.py`, etc.)
+exist only in the toolkit repo. Consumer projects never have copies of these
+files in their own repos — they import the toolkit as a dependency. A consumer
+project has no filesystem path to modify the national law, so the separation
+is structural, not just policy.
+
+### Constitutional Amendment Gate
+
+Any change to a national governance file (as listed in
+`governance_amendment_rule.governance_files` in `.control-loop/policy.json`)
+requires **mandatory human approval** before merging:
+
+1. The session log must contain: `- Governance change token: GOVERNANCE_CHANGE`
+2. The session log must contain non-empty: `- Governance review evidence: <human sign-off>`
+
+Without both, `process_guard` blocks the merge. This is enforced in CI.
+The AI may propose and draft governance changes, but cannot land them alone.
+
+### Conflicting-Change Detection (deferred)
+
+An amendment that weakens or removes an existing national rule (e.g., disabling
+a mandatory check, removing a required file from the list) is more dangerous than
+an additive amendment. Automatic detection of such regressions requires:
+- Reading the base version of the governance file from git
+- Comparing enforcement keys and their values
+- Classifying weakening vs. additive changes
+
+This is deferred to a future backlog item. Until then, the human reviewer is the
+sole arbiter of whether a proposed amendment is regressive. The constitutional
+amendment gate ensures a human always reviews before merge.

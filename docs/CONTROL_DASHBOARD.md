@@ -1,7 +1,7 @@
 # Control Dashboard
 
 - Source snapshot: `backlog=2026-02-24, setpoints=2026-02-25`
-- Open backlog items: `2`
+- Open backlog items: `3`
 - Active items: `1`
 - Blocked items: `0`
 - Blocker items: `0`
@@ -9,7 +9,7 @@
 ## Status Breakdown
 - `active`: `1`
 - `closed`: `7`
-- `planned`: `1`
+- `planned`: `2`
 
 ## Setpoint Health
 | ID | Name | Current | Target | Status |
@@ -20,6 +20,7 @@
 
 ## Top Priority Queue
 - `BL-009` (next, score=50): Feature development lifecycle process from planning to production readiness -> next: Design stage-gated feature workflow with design, implementation, validation, release, and rollback checkpoints.
+- `BL-010` (next, score=50): Constitutional amendment: detect and block regressive governance changes automatically -> next: Design a check inside check_governance_amendment_rule that reads the base version of each governance file from git and compares enforcement keys (enabled flags, required_files lists, required field names) to detect weakening changes. Weakening changes must fail even if GOVERNANCE_CHANGE token is present, unless the human explicitly marks them as intentional regressions with additional evidence.
 - `BL-003` (later, score=18): AI capability levels and multi-agent coordination plan -> next: Design capability-level schema and lock strategy for concurrent agents.
 
 ## Roadmap Snapshot
@@ -28,6 +29,7 @@
 ### Next
 - `BL-006` (closed): Automate SP-003 metric collection for issue-to-validated cycle time
 - `BL-009` (planned): Feature development lifecycle process from planning to production readiness
+- `BL-010` (planned): Constitutional amendment: detect and block regressive governance changes automatically
 ### Later
 - `BL-003` (active): AI capability levels and multi-agent coordination plan
 

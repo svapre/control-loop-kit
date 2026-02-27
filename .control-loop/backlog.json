@@ -225,6 +225,30 @@
       ],
       "created_on": "2026-02-25",
       "updated_on": "2026-02-25"
+    },
+    {
+      "id": "BL-010",
+      "title": "Constitutional amendment: detect and block regressive governance changes automatically",
+      "type": "future_plan",
+      "status": "planned",
+      "roadmap_lane": "next",
+      "linked_setpoints": [
+        "SP-002"
+      ],
+      "is_blocker": false,
+      "expected_error_reduction": "high",
+      "confidence": "medium",
+      "effort": "medium",
+      "priority_score": 50,
+      "owner_role": "thinking_ai",
+      "next_action": "Design a check inside check_governance_amendment_rule that reads the base version of each governance file from git and compares enforcement keys (enabled flags, required_files lists, required field names) to detect weakening changes. Weakening changes must fail even if GOVERNANCE_CHANGE token is present, unless the human explicitly marks them as intentional regressions with additional evidence.",
+      "acceptance_checks": [
+        "python -m pytest -q tests/test_governance_amendment_contract.py",
+        "python -m ruff check control_loop/process_guard.py",
+        "python -m pytest -q"
+      ],
+      "created_on": "2026-02-27",
+      "updated_on": "2026-02-27"
     }
   ]
 }
