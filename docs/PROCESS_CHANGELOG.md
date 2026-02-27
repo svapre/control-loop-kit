@@ -2,6 +2,23 @@
 
 This log tracks changes to control-system process, policy, and governance artifacts.
 
+## 2026-02-27 - Machine-verifiable governance authority gate
+- Added `scripts/verify_governance_authority.py`:
+  - checks pull request metadata via GitHub API,
+  - enforces that governance-file changes have qualifying approval authority,
+  - supports explicit owner self-signoff marker to avoid lockout (`- Governance authority sign-off: OWNER_APPROVED`).
+- Added `governance_human_authority_rule` policy block:
+  - schema validation in `control_loop/policy.py`,
+  - default shape in `control_loop/default_policy.json`,
+  - enabled project override in `.control-loop/policy.json`.
+- Wired CI enforcement in `verify` job:
+  - new step `Governance Human Authority Check` with `GITHUB_TOKEN`.
+- Added contract tests:
+  - `tests/test_governance_authority_contract.py`,
+  - policy validation tests in `tests/test_policy_contract.py`.
+- Added `.github/CODEOWNERS` mapping for governance/constitutional files (effective when code-owner review is enabled in branch protection).
+- Updated policy and gate-suite docs for the new rule and check.
+
 ## 2026-02-24 - Toolkit location decoupled from project repository
 - Removed toolkit submodule from this repository (`tooling/control-loop-kit`).
 - Updated wrappers to resolve toolkit in this order:

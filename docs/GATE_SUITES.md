@@ -24,8 +24,9 @@ These commands are the current full candidate-controller gates:
 5. `python scripts/validate_onboarding_docs.py --check`
 6. `python scripts/validate_release_hygiene.py --check --allow-unreleased-latest`
 7. `python scripts/verify_control_loop.py --check`
-8. `ruff check .`
-9. `pytest -q`
+8. `python scripts/verify_governance_authority.py --check`
+9. `ruff check .`
+10. `pytest -q`
 
 ## Promotion Rule
 Promote Stage1 to a new Stage0 tag only when:

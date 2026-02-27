@@ -96,6 +96,11 @@ jobs:
       - name: Control-Loop Integrity Check
         run: python scripts/verify_control_loop.py --check
 
+      - name: Governance Human Authority Check
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python scripts/verify_governance_authority.py --check
+
       - name: Control Gate (state government — artifact compliance)
         run: python -m control_loop.control_gate --mode ci
 

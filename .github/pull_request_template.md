@@ -19,3 +19,6 @@
 - [ ] Updated `MASTER_PLAN.md` when control-step status changed
 - [ ] Confirmed `.control-loop/ai_settings.json` was applied (or documented waiver/advisory mode)
 
+## Governance Authority (only for governance-file changes)
+- Governance authority sign-off: none
+

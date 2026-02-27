@@ -26,6 +26,7 @@ SUITES = {
         ["python", "scripts/validate_onboarding_docs.py", "--check"],
         ["python", "scripts/validate_release_hygiene.py", "--check", "--allow-unreleased-latest"],
         ["python", "scripts/verify_control_loop.py", "--check"],
+        ["python", "scripts/verify_governance_authority.py", "--check"],
         ["python", "-m", "ruff", "check", "."],
         ["python", "-m", "pytest", "-q"],
     ],

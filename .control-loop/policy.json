@@ -188,5 +188,25 @@
       "scripts/verify_control_loop.py",
       "scripts/run_gate_suite.py"
     ]
+  },
+  "governance_human_authority_rule": {
+    "enabled": true,
+    "governance_files": [
+      "control_loop/default_policy.json",
+      "control_loop/process_guard.py",
+      "control_loop/control_gate.py",
+      "control_loop/policy.py",
+      "scripts/verify_control_loop.py",
+      "scripts/run_gate_suite.py"
+    ],
+    "required_approvers": [
+      "svapre"
+    ],
+    "minimum_approvals": 1,
+    "require_approval_on_latest_commit": true,
+    "allow_pr_authority_bypass": true,
+    "pr_authority_bypass_field": "- Governance authority sign-off:",
+    "pr_authority_bypass_token": "OWNER_APPROVED",
+    "require_human_reviewers": true
   }
 }

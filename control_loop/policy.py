@@ -421,6 +421,30 @@ def validate_ai_settings(settings: dict[str, Any], context: str) -> None:
                 raise ValueError(f"{context}.ai_settings.session_log.{key} must be a string")
 
 
+def validate_governance_human_authority_rule(rule: dict[str, Any], context: str) -> None:
+    if not isinstance(rule, dict):
+        raise ValueError(f"{context}.governance_human_authority_rule must be an object")
+
+    _assert_bool(rule, "enabled", f"{context}.governance_human_authority_rule")
+    _assert_list_of_strings(rule, "governance_files", f"{context}.governance_human_authority_rule")
+    _assert_list_of_strings(rule, "required_approvers", f"{context}.governance_human_authority_rule")
+    _assert_bool(rule, "require_approval_on_latest_commit", f"{context}.governance_human_authority_rule")
+    _assert_bool(rule, "allow_pr_authority_bypass", f"{context}.governance_human_authority_rule")
+    _assert_bool(rule, "require_human_reviewers", f"{context}.governance_human_authority_rule")
+
+    if "minimum_approvals" in rule:
+        minimum = rule["minimum_approvals"]
+        if not isinstance(minimum, int) or minimum < 1:
+            raise ValueError(
+                f"{context}.governance_human_authority_rule.minimum_approvals "
+                "must be an integer >= 1"
+            )
+
+    for key in ["pr_authority_bypass_field", "pr_authority_bypass_token"]:
+        if key in rule and not isinstance(rule[key], str):
+            raise ValueError(f"{context}.governance_human_authority_rule.{key} must be a string")
+
+
 def validate_policy(policy: dict[str, Any], context: str) -> None:
     validate_override_directive(policy, context)
     if "control_gate" in policy:
@@ -431,6 +455,8 @@ def validate_policy(policy: dict[str, Any], context: str) -> None:
         validate_ai_settings_loader(policy["ai_settings_loader"], context)
     if "ai_settings" in policy:
         validate_ai_settings(policy["ai_settings"], context)
+    if "governance_human_authority_rule" in policy:
+        validate_governance_human_authority_rule(policy["governance_human_authority_rule"], context)
 
 
 def _strip_override_directive(policy: dict[str, Any]) -> dict[str, Any]:

@@ -73,6 +73,8 @@ Reusable process-control toolkit for AI-assisted software projects.
   - `python scripts/validate_onboarding_docs.py --check`
 - Validate release hygiene contract:
   - `python scripts/validate_release_hygiene.py --check --allow-unreleased-latest`
+- Validate governance human-authority gate wiring (CI PR context):
+  - `python scripts/verify_governance_authority.py --check`
 
 ## Current release
 - `v0.7.0` (unreleased candidate: Stage0 suite runner promotion + control-loop integrity + constitutional amendment gate)

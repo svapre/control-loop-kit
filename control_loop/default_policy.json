@@ -405,5 +405,16 @@
     "required_token_field": "- Governance change token:",
     "required_token_value": "GOVERNANCE_CHANGE",
     "review_evidence_field": "- Governance review evidence:"
+  },
+  "governance_human_authority_rule": {
+    "enabled": false,
+    "governance_files": [],
+    "required_approvers": [],
+    "minimum_approvals": 1,
+    "require_approval_on_latest_commit": true,
+    "allow_pr_authority_bypass": false,
+    "pr_authority_bypass_field": "- Governance authority sign-off:",
+    "pr_authority_bypass_token": "OWNER_APPROVED",
+    "require_human_reviewers": true
   }
 }

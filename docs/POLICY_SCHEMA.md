@@ -8,6 +8,9 @@ This document defines the expected shape of `.control-loop/policy.json`.
   "policy_override": {},
   "control_gate": {},
   "process_guard": {},
+  "control_loop_integrity": {},
+  "governance_amendment_rule": {},
+  "governance_human_authority_rule": {},
   "ai_settings_loader": {},
   "ai_settings": {}
 }
@@ -48,6 +51,30 @@ This document defines the expected shape of `.control-loop/policy.json`.
 - session checks are controlled via `ai_settings.session_log`
 - `design_principle_rules`: proposal field-value enforcement with per-rule severity (`strict` / `warn` / `manual_review`)
 - `static_guard_rules`: regex-based scans for changed implementation files (for hardcoding/overfitting signals)
+
+## `control_loop_integrity` keys
+- `ci_workflow_path`: path to CI workflow to inspect (default `.github/workflows/ci.yml`)
+- `required_gate_markers`: array of script markers expected in CI
+- `stage0_check`: `"ignore"`, `"warn"`, or `"strict"` behavior for missing Stage0 marker
+- `stage0_marker`: marker string expected in CI env (default `STAGE0_TAG`)
+
+## `governance_amendment_rule` keys
+- `enabled`: boolean
+- `governance_files`: array of governance/constitutional file paths
+- `required_token_field`: session marker used for amendment intent
+- `required_token_value`: required token value (default `GOVERNANCE_CHANGE`)
+- `review_evidence_field`: session marker used for human review evidence
+
+## `governance_human_authority_rule` keys
+- `enabled`: boolean
+- `governance_files`: array of governance/constitutional file paths
+- `required_approvers`: GitHub login list allowed to approve governance changes
+- `minimum_approvals`: integer >= 1
+- `require_approval_on_latest_commit`: boolean
+- `allow_pr_authority_bypass`: boolean (prevents lockout for configured authority account)
+- `pr_authority_bypass_field`: PR body marker for authority self-signoff
+- `pr_authority_bypass_token`: required value for self-signoff marker
+- `require_human_reviewers`: boolean (ignore bot approvals when true)
 
 ### Work mode rule
 ```json

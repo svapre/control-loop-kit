@@ -10,6 +10,10 @@
 - Added constitutional-amendment protection for governance-law changes:
   - governance-file edits now require `GOVERNANCE_CHANGE` token and human review evidence.
   - contract tests added in `tests/test_governance_amendment_contract.py`.
+- Added machine-verifiable governance human-authority check:
+  - `scripts/verify_governance_authority.py` validates PR approval authority for governance-file changes.
+  - CI `verify` job now enforces the check on pull requests.
+  - policy model now includes `governance_human_authority_rule`.
 - Hardened national/state policy layering:
   - removed project-specific gate marker names from national defaults.
   - moved marker declarations to project policy (`.control-loop/policy.json`).
