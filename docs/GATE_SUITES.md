@@ -10,8 +10,9 @@ These commands are the stable baseline gates that Stage0 (trusted controller) mu
 1. `python scripts/generate_model_catalog_prompt.py --check` - verify deterministic prompt generation is in sync.
 2. `python scripts/validate_backlog.py --check` - enforce backlog/setpoint contract consistency.
 3. `python scripts/render_dashboard.py --check` - verify dashboard output is deterministic and up to date.
-4. `ruff check .` - enforce static lint baseline.
-5. `pytest -q` - enforce executable behavior contracts.
+4. `python scripts/verify_control_loop.py --check` - verify CI has active governance wiring and Stage0 marker.
+5. `ruff check .` - enforce static lint baseline.
+6. `pytest -q` - enforce executable behavior contracts.
 
 ## Stage1 Full Gate Suite
 These commands are the current full candidate-controller gates:
@@ -22,8 +23,9 @@ These commands are the current full candidate-controller gates:
 4. `python scripts/render_dashboard.py --check`
 5. `python scripts/validate_onboarding_docs.py --check`
 6. `python scripts/validate_release_hygiene.py --check --allow-unreleased-latest`
-7. `ruff check .`
-8. `pytest -q`
+7. `python scripts/verify_control_loop.py --check`
+8. `ruff check .`
+9. `pytest -q`
 
 ## Promotion Rule
 Promote Stage1 to a new Stage0 tag only when:
@@ -36,9 +38,9 @@ Promote Stage1 to a new Stage0 tag only when:
 ## Local Run (Windows)
 Example runner paths:
 
-- Stage0 runner: `D:\code\venvs\clk-stage0-v066\Scripts\python.exe`
+- Stage0 runner: `D:\code\venvs\clk-stage0-v070\Scripts\python.exe`
 - Stage1 runner: `D:\code\venvs\clk-stage1\Scripts\python.exe`
 
 Example command pattern (run from `D:\code\control-loop-kit`):
 
-- `& 'D:\code\venvs\clk-stage0-v066\Scripts\python.exe' scripts/validate_backlog.py --check`
+- `& 'D:\code\venvs\clk-stage0-v070\Scripts\python.exe' scripts/run_gate_suite.py --suite stage0 --target-root D:\code\control-loop-kit`

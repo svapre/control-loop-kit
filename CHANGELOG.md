@@ -1,5 +1,23 @@
 # Changelog
 
+## v0.7.0
+- Promoted Stage0 governance architecture to v0.7.0 baseline:
+  - Stage0 CI now runs `scripts/run_gate_suite.py --suite stage0`.
+  - Stage0 suite includes control-loop integrity wiring verification (`verify_control_loop.py`).
+- Added control-loop integrity meta-gate:
+  - `scripts/verify_control_loop.py` validates CI wiring and Stage0 marker presence.
+  - contract tests added in `tests/test_control_loop_integrity_contract.py`.
+- Added constitutional-amendment protection for governance-law changes:
+  - governance-file edits now require `GOVERNANCE_CHANGE` token and human review evidence.
+  - contract tests added in `tests/test_governance_amendment_contract.py`.
+- Hardened national/state policy layering:
+  - removed project-specific gate marker names from national defaults.
+  - moved marker declarations to project policy (`.control-loop/policy.json`).
+- Wired toolkit self-governance in `verify` CI job:
+  - strict `control_gate` enforcement.
+  - advisory `process_guard` enforcement during bootstrap period.
+- Codified exclusive constitutional law-making authority in governance docs and backlog.
+
 ## v0.6.6
 - Added Execution Harness v1:
   - `start` / `run` / `finalize` commands,

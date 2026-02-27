@@ -75,5 +75,5 @@ Reusable process-control toolkit for AI-assisted software projects.
   - `python scripts/validate_release_hygiene.py --check --allow-unreleased-latest`
 
 ## Current release
-- `v0.6.5` (SP-003 metric automation + CI setpoint sync check)
+- `v0.7.0` (unreleased candidate: Stage0 suite runner promotion + control-loop integrity + constitutional amendment gate)
 
