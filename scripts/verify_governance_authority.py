@@ -6,6 +6,7 @@ import argparse
 import json
 import os
 import re
+import subprocess
 import sys
 from pathlib import Path
 from typing import Any
@@ -208,6 +209,102 @@ def _governance_files_from_policy(policy: dict[str, Any], cfg: dict[str, Any]) -
     return []
 
 
+def _string_list(value: Any) -> list[str]:
+    if not isinstance(value, list):
+        return []
+    out: list[str] = []
+    for item in value:
+        if isinstance(item, str) and item.strip():
+            out.append(item.strip())
+    return out
+
+
+def _bool_from(cfg: dict[str, Any], key: str, default: bool) -> bool:
+    value = cfg.get(key, default)
+    return value if isinstance(value, bool) else default
+
+
+def _int_from(cfg: dict[str, Any], key: str, default: int) -> int:
+    value = cfg.get(key, default)
+    if isinstance(value, int):
+        return value
+    return default
+
+
+def _load_policy_json_from_git_ref(ref: str, path: str = ".control-loop/policy.json") -> tuple[dict[str, Any], str | None]:
+    if not ref.strip():
+        return {}, "No base ref available for policy comparison."
+
+    proc = subprocess.run(
+        ["git", "show", f"{ref}:{path}"],
+        capture_output=True,
+        text=True,
+    )
+    if proc.returncode != 0:
+        detail = (proc.stderr or proc.stdout or "").strip()
+        return {}, f"Unable to load base policy from {ref}:{path}: {detail}"
+
+    try:
+        data = json.loads(proc.stdout)
+    except json.JSONDecodeError as exc:
+        return {}, f"Invalid JSON in base policy at {ref}:{path}: {exc}"
+
+    if not isinstance(data, dict):
+        return {}, f"Base policy at {ref}:{path} is not a JSON object."
+    return data, None
+
+
+def _merge_authority_config(current_cfg: dict[str, Any], base_cfg: dict[str, Any]) -> dict[str, Any]:
+    base_present = bool(base_cfg)
+    merged: dict[str, Any] = {}
+
+    current_enabled = _bool_from(current_cfg, "enabled", False)
+    base_enabled = _bool_from(base_cfg, "enabled", False)
+    merged["enabled"] = current_enabled or base_enabled
+
+    if base_present:
+        merged["minimum_approvals"] = max(
+            1,
+            _int_from(current_cfg, "minimum_approvals", 1),
+            _int_from(base_cfg, "minimum_approvals", 1),
+        )
+        merged["require_approval_on_latest_commit"] = _bool_from(
+            current_cfg, "require_approval_on_latest_commit", True
+        ) or _bool_from(base_cfg, "require_approval_on_latest_commit", True)
+        merged["require_human_reviewers"] = _bool_from(
+            current_cfg, "require_human_reviewers", True
+        ) or _bool_from(base_cfg, "require_human_reviewers", True)
+        merged["allow_pr_authority_bypass"] = _bool_from(
+            current_cfg, "allow_pr_authority_bypass", False
+        ) and _bool_from(base_cfg, "allow_pr_authority_bypass", False)
+
+        approvers = set(_string_list(current_cfg.get("required_approvers")))
+        approvers.update(_string_list(base_cfg.get("required_approvers")))
+        merged["required_approvers"] = sorted(approvers)
+    else:
+        merged["minimum_approvals"] = max(1, _int_from(current_cfg, "minimum_approvals", 1))
+        merged["require_approval_on_latest_commit"] = _bool_from(
+            current_cfg, "require_approval_on_latest_commit", True
+        )
+        merged["require_human_reviewers"] = _bool_from(current_cfg, "require_human_reviewers", True)
+        merged["allow_pr_authority_bypass"] = _bool_from(current_cfg, "allow_pr_authority_bypass", False)
+        merged["required_approvers"] = _string_list(current_cfg.get("required_approvers"))
+
+    merged["pr_authority_bypass_field"] = str(
+        current_cfg.get(
+            "pr_authority_bypass_field",
+            base_cfg.get("pr_authority_bypass_field", "- Governance authority sign-off:"),
+        )
+    )
+    merged["pr_authority_bypass_token"] = str(
+        current_cfg.get(
+            "pr_authority_bypass_token",
+            base_cfg.get("pr_authority_bypass_token", "OWNER_APPROVED"),
+        )
+    )
+    return merged
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Verify governance human authority for constitutional changes.")
     parser.add_argument("--check", action="store_true", help="Run verification checks")
@@ -223,11 +320,6 @@ def main() -> int:
     except Exception as exc:
         print(f"FAIL: policy load/validation error: {exc}")
         return 1
-
-    cfg = _governance_authority_config(policy)
-    if not cfg.get("enabled", False):
-        print("PASS: governance human authority rule disabled.")
-        return 0
 
     event_name = os.getenv("GITHUB_EVENT_NAME", "")
     if event_name not in {"pull_request", "pull_request_target"}:
@@ -249,6 +341,30 @@ def main() -> int:
     if not isinstance(pr_number, int):
         print("FAIL: pull_request.number missing from event payload.")
         return 1
+
+    current_cfg = _governance_authority_config(policy)
+    base_sha = ""
+    base_obj = pull_request.get("base", {})
+    if isinstance(base_obj, dict):
+        base_sha = str(base_obj.get("sha", "") or "")
+
+    base_policy: dict[str, Any] = {}
+    if base_sha:
+        loaded_base, base_warning = _load_policy_json_from_git_ref(base_sha)
+        if base_warning:
+            print(f"WARN: {base_warning}")
+        else:
+            base_policy = loaded_base
+
+    base_cfg = _governance_authority_config(base_policy)
+    cfg = _merge_authority_config(current_cfg, base_cfg)
+    current_governance_files = _governance_files_from_policy(policy, current_cfg)
+    base_governance_files = _governance_files_from_policy(base_policy, base_cfg)
+    cfg["governance_files"] = sorted(set(current_governance_files) | set(base_governance_files))
+
+    if not cfg.get("enabled", False):
+        print("PASS: governance human authority rule disabled.")
+        return 0
 
     repo = os.getenv("GITHUB_REPOSITORY", "")
     if not repo:
@@ -291,9 +407,6 @@ def main() -> int:
         if isinstance(name, str):
             changed_files.add(name)
 
-    full_cfg = dict(cfg)
-    full_cfg["governance_files"] = _governance_files_from_policy(policy, cfg)
-
     head = pull_request.get("head", {})
     author = pull_request.get("user", {})
     head_sha = head.get("sha") if isinstance(head, dict) else ""
@@ -303,7 +416,7 @@ def main() -> int:
     failures, warnings = evaluate_governance_authority(
         changed_files,
         reviews,
-        full_cfg,
+        cfg,
         head_sha=str(head_sha or ""),
         pr_author=str(pr_author or ""),
         pr_body=str(pr_body or ""),

@@ -28,6 +28,9 @@ These commands are the current full candidate-controller gates:
 9. `ruff check .`
 10. `pytest -q`
 
+For governance-file pull requests, CI also requires interactive human approval
+through GitHub Environment `governance-amendment` before merge-blocking jobs run.
+
 ## Promotion Rule
 Promote Stage1 to a new Stage0 tag only when:
 

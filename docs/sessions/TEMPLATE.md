@@ -29,7 +29,3 @@
 ## Results and Feedback
 - Feedback received:
 - Feedback applied:
-
-## Governance Change (fill only when modifying toolkit governance files)
-- Governance change token: none
-- Governance review evidence: none

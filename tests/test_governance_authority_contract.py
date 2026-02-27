@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from scripts.verify_governance_authority import evaluate_governance_authority
+from scripts.verify_governance_authority import _merge_authority_config, evaluate_governance_authority
 
 
 def _review(
@@ -148,3 +148,37 @@ def test_bot_approval_is_ignored_when_human_required() -> None:
     )
     assert fails
     assert not warns
+
+
+def test_merge_keeps_base_enabled_rule_active() -> None:
+    merged = _merge_authority_config(
+        {"enabled": False, "required_approvers": [], "minimum_approvals": 1},
+        {
+            "enabled": True,
+            "required_approvers": ["svapre"],
+            "minimum_approvals": 1,
+            "require_approval_on_latest_commit": True,
+            "require_human_reviewers": True,
+            "allow_pr_authority_bypass": False,
+        },
+    )
+    assert merged["enabled"] is True
+    assert merged["required_approvers"] == ["svapre"]
+
+
+def test_merge_does_not_allow_head_to_enable_bypass_if_base_disables_it() -> None:
+    merged = _merge_authority_config(
+        {
+            "enabled": True,
+            "required_approvers": ["svapre"],
+            "minimum_approvals": 1,
+            "allow_pr_authority_bypass": True,
+        },
+        {
+            "enabled": True,
+            "required_approvers": ["svapre"],
+            "minimum_approvals": 1,
+            "allow_pr_authority_bypass": False,
+        },
+    )
+    assert merged["allow_pr_authority_bypass"] is False

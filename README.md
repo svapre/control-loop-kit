@@ -50,6 +50,10 @@ Reusable process-control toolkit for AI-assisted software projects.
     - optional active-contract checks for controlled implementation paths,
     - scope, approval, backlog-link, and stale-base validation from policy.
     - status-transition validation when `.control-loop/contracts.json` changes.
+14. Interactive constitutional approval gate:
+    - governance-file PRs pause in GitHub Environment `governance-amendment`,
+    - merge-blocking jobs resume only after explicit human approval,
+    - authority check verifies reviewer approval on latest PR commit.
 
 ## Control cockpit files
 - `.control-loop/setpoints.json`

@@ -6,13 +6,18 @@ This log tracks changes to control-system process, policy, and governance artifa
 - Added `scripts/verify_governance_authority.py`:
   - checks pull request metadata via GitHub API,
   - enforces that governance-file changes have qualifying approval authority,
-  - supports explicit owner self-signoff marker to avoid lockout (`- Governance authority sign-off: OWNER_APPROVED`).
+  - evaluates against effective base+head policy config so a PR cannot disable authority checks and bypass review.
 - Added `governance_human_authority_rule` policy block:
   - schema validation in `control_loop/policy.py`,
   - default shape in `control_loop/default_policy.json`,
   - enabled project override in `.control-loop/policy.json`.
 - Wired CI enforcement in `verify` job:
   - new step `Governance Human Authority Check` with `GITHUB_TOKEN`.
+- Added interactive approval gate in CI:
+  - `detect-governance-changes` computes governance-file changes from base+head policy union.
+  - `governance-human-approval` pauses in GitHub Environment `governance-amendment` for human approval.
+  - `stage0-governance` and `verify` proceed only after approval or when the gate is not applicable.
+- Disabled this repository's legacy token-based governance-amendment gate (`governance_amendment_rule.enabled=false`).
 - Added contract tests:
   - `tests/test_governance_authority_contract.py`,
   - policy validation tests in `tests/test_policy_contract.py`.

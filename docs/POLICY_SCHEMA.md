@@ -61,7 +61,7 @@ This document defines the expected shape of `.control-loop/policy.json`.
 ## `governance_amendment_rule` keys
 - `enabled`: boolean
 - `governance_files`: array of governance/constitutional file paths
-- `required_token_field`: session marker used for amendment intent
+- `required_token_field`: session marker used for amendment intent (legacy/manual flow)
 - `required_token_value`: required token value (default `GOVERNANCE_CHANGE`)
 - `review_evidence_field`: session marker used for human review evidence
 
@@ -71,10 +71,15 @@ This document defines the expected shape of `.control-loop/policy.json`.
 - `required_approvers`: GitHub login list allowed to approve governance changes
 - `minimum_approvals`: integer >= 1
 - `require_approval_on_latest_commit`: boolean
-- `allow_pr_authority_bypass`: boolean (prevents lockout for configured authority account)
-- `pr_authority_bypass_field`: PR body marker for authority self-signoff
-- `pr_authority_bypass_token`: required value for self-signoff marker
+- `allow_pr_authority_bypass`: boolean (optional; keep `false` for strict interactive approval flow)
+- `pr_authority_bypass_field`: PR body marker for authority self-signoff (used only when bypass enabled)
+- `pr_authority_bypass_token`: required value for self-signoff marker (used only when bypass enabled)
 - `require_human_reviewers`: boolean (ignore bot approvals when true)
+
+Recommended for production governance:
+- keep `governance_human_authority_rule.enabled=true`
+- keep `allow_pr_authority_bypass=false`
+- enforce interactive human approval with GitHub Environment reviewers in CI
 
 ### Work mode rule
 ```json
