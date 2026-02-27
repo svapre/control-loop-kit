@@ -395,10 +395,7 @@
   },
   "control_loop_integrity": {
     "ci_workflow_path": ".github/workflows/ci.yml",
-    "required_gate_markers": [
-      "process_guard",
-      "control_gate"
-    ],
+    "required_gate_markers": [],
     "stage0_check": "warn",
     "stage0_marker": "STAGE0_TAG"
   }

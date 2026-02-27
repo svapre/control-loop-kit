@@ -39,17 +39,32 @@ def check_ci_wiring(policy_config: dict[str, Any]) -> tuple[list[str], list[str]
 
     content = ci_path.read_text(encoding="utf-8")
     
-    # Check required gates are invoked
-    for marker in policy_config.get("required_gate_markers", ["process_guard", "control_gate"]):
-        if marker not in content:
-            failures.append(f"CI workflow '{ci_path_str}' does not appear to invoke required gate: {marker}")
+    markers = policy_config.get("required_gate_markers", [])
+    if not markers:
+        # No project-specific markers declared — the project hasn't told us which
+        # gates its CI invokes. Universal law only knows CI exists; project policy
+        # must declare the specific scripts.
+        warnings.append(
+            "No required_gate_markers declared in project policy "
+            "(control_loop_integrity.required_gate_markers). "
+            "Add the gate script names your CI invokes so the wiring check is meaningful."
+        )
+    else:
+        for marker in markers:
+            if marker not in content:
+                failures.append(
+                    f"CI workflow '{ci_path_str}' does not appear to invoke required gate: {marker}"
+                )
 
     # Check stage0 configuration
     stage0_check = policy_config.get("stage0_check", "warn")
     if stage0_check != "ignore":
         stage0_marker = policy_config.get("stage0_marker", "STAGE0_TAG")
         if stage0_marker not in content:
-            msg = f"CI workflow '{ci_path_str}' does not appear to configure Stage0 external governance (missing '{stage0_marker}')"
+            msg = (
+                f"CI workflow '{ci_path_str}' does not appear to configure "
+                f"Stage0 external governance (missing '{stage0_marker}')"
+            )
             if stage0_check == "strict":
                 failures.append(msg)
             else:
