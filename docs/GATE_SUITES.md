@@ -36,9 +36,9 @@ Promote Stage1 to a new Stage0 tag only when:
 ## Local Run (Windows)
 Example runner paths:
 
-- Stage0 runner: `D:\UPSC\venvs\clk-stage0-v064\Scripts\python.exe`
-- Stage1 runner: `D:\UPSC\venvs\clk-stage1\Scripts\python.exe`
+- Stage0 runner: `D:\code\venvs\clk-stage0-v066\Scripts\python.exe`
+- Stage1 runner: `D:\code\venvs\clk-stage1\Scripts\python.exe`
 
-Example command pattern (run from `D:\UPSC\control-loop-kit`):
+Example command pattern (run from `D:\code\control-loop-kit`):
 
-- `& 'D:\UPSC\venvs\clk-stage1\Scripts\python.exe' scripts/validate_backlog.py --check`
+- `& 'D:\code\venvs\clk-stage0-v066\Scripts\python.exe' scripts/validate_backlog.py --check`
