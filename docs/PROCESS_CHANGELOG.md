@@ -17,6 +17,7 @@ This log tracks changes to control-system process, policy, and governance artifa
   - `detect-governance-changes` computes governance-file changes from base+head policy union.
   - `governance-human-approval` pauses in GitHub Environment `governance-amendment` for human approval.
   - `stage0-governance` and `verify` proceed only after approval or when the gate is not applicable.
+  - merge-blocking jobs are restricted to `pull_request` events so push-run statuses cannot satisfy required checks prematurely.
 - Disabled this repository's legacy token-based governance-amendment gate (`governance_amendment_rule.enabled=false`).
 - Added contract tests:
   - `tests/test_governance_authority_contract.py`,

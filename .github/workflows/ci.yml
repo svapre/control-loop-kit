@@ -116,7 +116,7 @@ jobs:
     needs:
       - detect-governance-changes
       - governance-human-approval
-    if: ${{ always() && needs.detect-governance-changes.result == 'success' && (needs.governance-human-approval.result == 'success' || needs.governance-human-approval.result == 'skipped') }}
+    if: ${{ github.event_name == 'pull_request' && always() && needs.detect-governance-changes.result == 'success' && (needs.governance-human-approval.result == 'success' || needs.governance-human-approval.result == 'skipped') }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout PR code
@@ -166,7 +166,7 @@ jobs:
     needs:
       - detect-governance-changes
       - governance-human-approval
-    if: ${{ always() && needs.detect-governance-changes.result == 'success' && (needs.governance-human-approval.result == 'success' || needs.governance-human-approval.result == 'skipped') }}
+    if: ${{ github.event_name == 'pull_request' && always() && needs.detect-governance-changes.result == 'success' && (needs.governance-human-approval.result == 'success' || needs.governance-human-approval.result == 'skipped') }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
