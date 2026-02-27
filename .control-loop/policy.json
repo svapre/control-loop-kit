@@ -177,5 +177,16 @@
     ],
     "stage0_check": "warn",
     "stage0_marker": "STAGE0_TAG"
+  },
+  "governance_amendment_rule": {
+    "enabled": true,
+    "governance_files": [
+      "control_loop/default_policy.json",
+      "control_loop/process_guard.py",
+      "control_loop/control_gate.py",
+      "control_loop/policy.py",
+      "scripts/verify_control_loop.py",
+      "scripts/run_gate_suite.py"
+    ]
   }
 }
