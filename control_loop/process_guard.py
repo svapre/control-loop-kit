@@ -66,6 +66,10 @@ def contract_rule_config(policy: dict[str, Any]) -> dict[str, Any]:
     return process_policy(policy).get("contract_lifecycle_rules", {})
 
 
+def governance_rule_config(policy: dict[str, Any]) -> dict[str, Any]:
+    return policy.get("governance_amendment_rule", {})
+
+
 def process_enforcement_state(policy: dict[str, Any]) -> tuple[bool, str]:
     switch = ai_global_switch(policy)
     enabled = bool(switch.get("enabled", True))
@@ -964,6 +968,68 @@ def check_contract_lifecycle_rules(
     return failures
 
 
+def check_governance_amendment_rule(
+    changed_files: set[str],
+    session_files: list[str],
+    policy: dict[str, Any],
+) -> list[str]:
+    """Block any change to national governance files unless a GOVERNANCE_CHANGE token
+    and explicit human review evidence are present in the session log.
+
+    This is the 'constitutional amendment' gate — a higher bar than regular
+    implementation changes, analogous to a presidential sign-off requirement.
+    """
+    cfg = governance_rule_config(policy)
+    if not cfg.get("enabled", False):
+        return []
+
+    governance_files = set(cfg.get("governance_files", []))
+    if not governance_files:
+        return []
+
+    changed_governance = [f for f in changed_files if f in governance_files]
+    if not changed_governance:
+        return []
+
+    token_field = cfg.get("required_token_field", "- Governance change token:")
+    token_value = cfg.get("required_token_value", "GOVERNANCE_CHANGE")
+    evidence_field = cfg.get("review_evidence_field", "- Governance review evidence:")
+    null_tokens = {"none", "n/a", "na", ""}
+
+    primary_session = resolve_primary_session_file(session_files)
+    if primary_session is None:
+        return [
+            f"Governance file(s) changed ({', '.join(sorted(changed_governance))}) "
+            "but no session log found. "
+            f"Session must contain '{token_field} {token_value}' and "
+            f"non-empty '{evidence_field}' before this can be merged."
+        ]
+
+    if not primary_session.exists():
+        return [f"Primary session file not found: {primary_session.as_posix()}"]
+
+    text = primary_session.read_text(encoding="utf-8")
+    failures: list[str] = []
+
+    token = get_marker_value(text, token_field).strip()
+    if token != token_value:
+        failures.append(
+            f"Governance file(s) changed ({', '.join(sorted(changed_governance))}). "
+            f"Session {primary_session.as_posix()} must contain "
+            f"'{token_field} {token_value}' to confirm this is a deliberate governance amendment."
+        )
+
+    evidence = get_marker_value(text, evidence_field).strip()
+    if evidence.lower() in null_tokens:
+        failures.append(
+            f"Governance file(s) changed ({', '.join(sorted(changed_governance))}). "
+            f"Session {primary_session.as_posix()} must contain non-empty "
+            f"'{evidence_field}' with evidence of human review and approval."
+        )
+
+    return failures
+
+
 def evaluate_change_coupling(
     changed_files: set[str],
     policy: dict[str, Any] | None = None,
@@ -1027,6 +1093,8 @@ def evaluate_change_coupling(
     failures.extend(check_phase_scope_rules(changed_files, session_files, policy, run_mode))
 
     failures.extend(check_contract_lifecycle_rules(changed_files, policy, warnings, run_mode, base_sha))
+
+    failures.extend(check_governance_amendment_rule(changed_files, session_files, policy))
 
     if run_mode != "think":
         failures.extend(check_static_guard_rules(changed_files, policy, warnings, manual_reviews))

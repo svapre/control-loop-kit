@@ -398,5 +398,12 @@
     "required_gate_markers": [],
     "stage0_check": "warn",
     "stage0_marker": "STAGE0_TAG"
+  },
+  "governance_amendment_rule": {
+    "enabled": false,
+    "governance_files": [],
+    "required_token_field": "- Governance change token:",
+    "required_token_value": "GOVERNANCE_CHANGE",
+    "review_evidence_field": "- Governance review evidence:"
   }
 }
