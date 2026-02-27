@@ -50,9 +50,13 @@ jobs:
       - name: "Stage0: Tests"
         run: python -m pytest -q
 
-  # ── Dev Validation (INFORMATIONAL) ────────────────────────────
-  # The dev toolkit's own gates, useful for catching bugs in new
-  # code. Not a governance authority.
+  # ── State Government (TOOLKIT SELF-GOVERNANCE) ──────────────────
+  # The toolkit's own CI enforces BOTH national laws (from default_policy.json)
+  # and its state laws (.control-loop/policy.json) on every PR.
+  # This makes the toolkit a proper consumer of its own governance.
+  # control_gate: strict (static artifact checks must pass)
+  # process_guard: advisory (reports violations, doesn't block yet —
+  #   bootstrap period while session/proposal docs are established)
   verify:
     runs-on: ubuntu-latest
     steps:
@@ -91,6 +95,15 @@ jobs:
 
       - name: Control-Loop Integrity Check
         run: python scripts/verify_control_loop.py --check
+
+      - name: Control Gate (state government — artifact compliance)
+        run: python -m control_loop.control_gate --mode ci
+
+      - name: Process Guard (state government — process compliance, advisory)
+        # Advisory mode: reports violations without blocking.
+        # Switch to strict (remove `|| true`) once session/proposal docs
+        # are bootstrapped for the toolkit's own changes.
+        run: python -m control_loop.process_guard --mode ci --base-sha ${{ github.event.pull_request.base.sha || 'HEAD~1' }} || true
 
       - name: Lint
         run: python -m ruff check .
