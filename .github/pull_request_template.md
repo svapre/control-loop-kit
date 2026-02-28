@@ -22,3 +22,10 @@
 ## Governance Approval (only for governance-file changes)
 - [ ] Confirmed this PR received required GitHub Environment approval (`governance-amendment`)
 
+## Constitutional Amendment Declaration (governance-affecting PRs only, interim Slice 1 source)
+- Legal object changed:
+- Affected layer:
+- Candidate tier: `C2`
+- Expected constitutional effect:
+- Draft status: `draft`
+
