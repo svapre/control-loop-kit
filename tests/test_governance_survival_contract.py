@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+from scripts.run_gate_suite import SUITES
 from scripts.verify_governance_survival import (
     ANCHOR_PATH_MAP,
+    PROFILE_LOCAL_FULL,
+    PROFILE_STAGE0_MIN_FLOOR,
     assess_governance_survival,
 )
 
@@ -210,4 +213,153 @@ def test_trace_payload_fields_are_present() -> None:
     assert isinstance(result.rationale, list)
     assert isinstance(result.baseline_results, dict)
     assert isinstance(result.disposition, str) and result.disposition
+
+
+def test_stage0_mode_declaration_scope_is_overlap_only() -> None:
+    head = _policy()
+    base = _policy()
+    enacted = _policy()
+    changed = {"GOVERNANCE.md"}
+
+    # In local_full mode this is governance-affecting via policy governance_files.
+    local_result = assess_governance_survival(
+        changed_files=changed,
+        pr_body="",
+        head_policy=head,
+        base_policy=base,
+        enacted_policy=enacted,
+        head_ci=_ci_text(),
+        base_ci=_ci_text(),
+        enacted_ci=_ci_text(),
+        head_present_paths=_all_anchor_paths(),
+        profile=PROFILE_LOCAL_FULL,
+    )
+    assert local_result.disposition == "REJECT_MISSING_DECLARATION"
+
+    # Stage0 minimum-floor mode should not require declaration for out-of-overlap files.
+    stage0_result = assess_governance_survival(
+        changed_files=changed,
+        pr_body="",
+        head_policy=head,
+        base_policy=base,
+        enacted_policy=enacted,
+        head_ci=_ci_text(),
+        base_ci=_ci_text(),
+        enacted_ci=_ci_text(),
+        head_present_paths=_all_anchor_paths(),
+        profile=PROFILE_STAGE0_MIN_FLOOR,
+    )
+    assert stage0_result.disposition == "PASS_NON_GOVERNANCE"
+    assert stage0_result.passed is True
+
+
+def test_stage0_mode_rejects_c0_weakening_in_overlap_scope() -> None:
+    head = _policy()
+    base = _policy()
+    enacted = _policy()
+    changed = {".github/workflows/ci.yml"}
+    weak_ci = "\n".join(["name: ci", "jobs:", "  verify:", "    steps:", "      - run: echo noop"])
+
+    result = assess_governance_survival(
+        changed_files=changed,
+        pr_body=_decl("C2"),
+        head_policy=head,
+        base_policy=base,
+        enacted_policy=enacted,
+        head_ci=weak_ci,
+        base_ci=_ci_text(),
+        enacted_ci=_ci_text(),
+        head_present_paths=_all_anchor_paths(),
+        profile=PROFILE_STAGE0_MIN_FLOOR,
+    )
+
+    assert result.final_tier == "C0"
+    assert result.disposition == "REJECT_INADMISSIBLE_WEAKENING"
+    assert result.passed is False
+
+
+def test_stage0_mode_keeps_minimum_posture_only_not_c1_escalation() -> None:
+    head = _policy()
+    base = _policy()
+    enacted = _policy()
+    changed = {"control_loop/policy.py"}
+
+    # local_full escalates protected-anchor refactor semantics to C1.
+    local_result = assess_governance_survival(
+        changed_files=changed,
+        pr_body=_decl("C2"),
+        head_policy=head,
+        base_policy=base,
+        enacted_policy=enacted,
+        head_ci=_ci_text(),
+        base_ci=_ci_text(),
+        enacted_ci=_ci_text(),
+        head_present_paths=_all_anchor_paths(),
+        profile=PROFILE_LOCAL_FULL,
+    )
+    assert local_result.final_tier == "C1"
+    assert local_result.disposition == "ACCEPT_C1_ESCALATED_REVIEW"
+
+    # stage0_min_floor keeps only minimum C0 posture checks and does not add C1 semantics.
+    stage0_result = assess_governance_survival(
+        changed_files=changed,
+        pr_body=_decl("C2"),
+        head_policy=head,
+        base_policy=base,
+        enacted_policy=enacted,
+        head_ci=_ci_text(),
+        base_ci=_ci_text(),
+        enacted_ci=_ci_text(),
+        head_present_paths=_all_anchor_paths(),
+        profile=PROFILE_STAGE0_MIN_FLOOR,
+    )
+    assert stage0_result.final_tier == "C2"
+    assert stage0_result.disposition == "ACCEPT_C2_AMENDMENT"
+    assert stage0_result.passed is True
+
+
+def test_local_full_default_profile_behavior_is_preserved() -> None:
+    head = _policy()
+    base = _policy()
+    enacted = _policy()
+    changed = {"control_loop/policy.py"}
+
+    explicit_local = assess_governance_survival(
+        changed_files=changed,
+        pr_body=_decl("C2"),
+        head_policy=head,
+        base_policy=base,
+        enacted_policy=enacted,
+        head_ci=_ci_text(),
+        base_ci=_ci_text(),
+        enacted_ci=_ci_text(),
+        head_present_paths=_all_anchor_paths(),
+        profile=PROFILE_LOCAL_FULL,
+    )
+    default_profile = assess_governance_survival(
+        changed_files=changed,
+        pr_body=_decl("C2"),
+        head_policy=head,
+        base_policy=base,
+        enacted_policy=enacted,
+        head_ci=_ci_text(),
+        base_ci=_ci_text(),
+        enacted_ci=_ci_text(),
+        head_present_paths=_all_anchor_paths(),
+    )
+
+    assert default_profile.final_tier == explicit_local.final_tier
+    assert default_profile.disposition == explicit_local.disposition
+    assert default_profile.passed == explicit_local.passed
+
+
+def test_stage0_suite_includes_survival_min_floor_step() -> None:
+    stage0_cmds = SUITES["stage0"]
+    assert [
+        "python",
+        "scripts/verify_governance_survival.py",
+        "--check",
+        "--profile",
+        "stage0_min_floor",
+    ] in stage0_cmds
 
