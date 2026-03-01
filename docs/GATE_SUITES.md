@@ -11,8 +11,14 @@ These commands are the stable baseline gates that Stage0 (trusted controller) mu
 2. `python scripts/validate_backlog.py --check` - enforce backlog/setpoint contract consistency.
 3. `python scripts/render_dashboard.py --check` - verify dashboard output is deterministic and up to date.
 4. `python scripts/verify_control_loop.py --check` - verify CI has active governance wiring and Stage0 marker.
-5. `ruff check .` - enforce static lint baseline.
-6. `pytest -q` - enforce executable behavior contracts.
+5. `python scripts/verify_governance_survival.py --check --profile stage0_min_floor` - enforce minimum C0 constitutional survival floor in Stage0 overlap scope.
+6. `ruff check .` - enforce static lint baseline.
+7. `pytest -q` - enforce executable behavior contracts.
+
+Stage0 `stage0_min_floor` profile is intentionally narrow:
+- declaration enforcement applies only for Stage0 minimum-floor overlap scope
+- only minimum C0 survival posture is adjudicated by Stage0
+- richer local/self-governance semantics remain in local full checks
 
 ## Stage1 Full Gate Suite
 These commands are the current full candidate-controller gates:

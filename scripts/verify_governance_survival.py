@@ -25,6 +25,9 @@ if str(ROOT) not in sys.path:
 
 TIER_ORDER = {"C2": 0, "C1": 1, "C0": 2}
 TIER_VALUES = set(TIER_ORDER.keys())
+PROFILE_LOCAL_FULL = "local_full"
+PROFILE_STAGE0_MIN_FLOOR = "stage0_min_floor"
+PROFILE_VALUES = {PROFILE_LOCAL_FULL, PROFILE_STAGE0_MIN_FLOOR}
 
 # Semantic anchor categories are stable constitutional concepts.
 SEMANTIC_ANCHORS: dict[str, dict[str, str]] = {
@@ -78,6 +81,17 @@ ANCHOR_PATH_MAP: dict[str, list[str]] = {
         ".control-loop/setpoints.json",
         ".control-loop/contracts.json",
     ],
+}
+
+# Stage0 minimum-floor overlap is intentionally narrow: only categories
+# required for constitutional survival at C0.
+STAGE0_MIN_FLOOR_CATEGORIES = {
+    "governance_declaration_scope",
+    "universal_baseline_law",
+    "independent_adjudication_wiring",
+    "governance_authority_verification",
+    "governance_integrity_verification",
+    "governance_enforcement_runtime",
 }
 
 DECLARATION_MARKERS = {
@@ -194,6 +208,13 @@ def anchor_paths_for_tier(tier: str) -> set[str]:
     return paths
 
 
+def anchor_paths_for_categories(categories: set[str]) -> set[str]:
+    paths: set[str] = set()
+    for category in categories:
+        paths.update(ANCHOR_PATH_MAP.get(category, []))
+    return paths
+
+
 def all_anchor_paths() -> set[str]:
     out: set[str] = set()
     for paths in ANCHOR_PATH_MAP.values():
@@ -292,6 +313,10 @@ def touched_anchor_categories(changed_files: set[str]) -> set[str]:
     return touched
 
 
+def stage0_overlap_scope_paths() -> set[str]:
+    return anchor_paths_for_categories(STAGE0_MIN_FLOOR_CATEGORIES)
+
+
 def derive_tier_signals(
     changed_files: set[str],
     touched_categories: set[str],
@@ -348,7 +373,7 @@ def protected_policy_fields_changed(head_policy: dict[str, Any], baseline_policy
     return False
 
 
-def assess_governance_survival(
+def assess_local_full(
     *,
     changed_files: set[str],
     pr_body: str,
@@ -451,6 +476,134 @@ def assess_governance_survival(
     )
 
 
+def assess_stage0_min_floor(
+    *,
+    changed_files: set[str],
+    pr_body: str,
+    head_policy: dict[str, Any],
+    base_policy: dict[str, Any],
+    enacted_policy: dict[str, Any],
+    head_ci: str,
+    base_ci: str,
+    enacted_ci: str,
+    head_present_paths: set[str],
+) -> AssessmentResult:
+    overlap_scope = stage0_overlap_scope_paths()
+    governance_affecting = any(path in overlap_scope for path in changed_files)
+
+    declaration = parse_amendment_declaration_from_text(pr_body)
+    declaration_errors = validate_declaration(declaration) if governance_affecting else []
+    declared_tier = declaration.candidate_tier if declaration is not None and declaration.candidate_tier in TIER_VALUES else None
+
+    c0_findings: list[str] = []
+    baseline_results: dict[str, dict[str, Any]] = {}
+    rationale: list[str] = []
+
+    if governance_affecting:
+        for baseline_name, baseline_policy, baseline_ci in [
+            ("base", base_policy, base_ci),
+            ("enacted", enacted_policy, enacted_ci),
+        ]:
+            findings = []
+            findings.extend(check_policy_regression(head_policy, baseline_policy, baseline_name))
+            findings.extend(check_ci_regression(head_ci, baseline_ci, baseline_name))
+            baseline_results[baseline_name] = {
+                "status": "fail" if findings else "pass",
+                "findings": findings,
+            }
+            c0_findings.extend(findings)
+
+        for path in sorted(anchor_paths_for_tier("C0")):
+            if path in changed_files and path not in head_present_paths:
+                c0_findings.append(f"candidate: protected C0 anchor file deleted or missing: {path}")
+    else:
+        baseline_results = {
+            "base": {"status": "skipped", "findings": []},
+            "enacted": {"status": "skipped", "findings": []},
+        }
+
+    derived_tier = "C0" if c0_findings else "C2"
+    if c0_findings:
+        rationale.append("Detected Stage0 minimum-floor C0 regression finding(s).")
+    elif governance_affecting:
+        rationale.append("No Stage0 minimum-floor C0 degradation detected in overlap scope.")
+
+    final_tier = derived_tier
+    if declared_tier is not None:
+        final_tier = max_tier(final_tier, declared_tier)
+        if final_tier != declared_tier:
+            rationale.append(f"Auto-escalated from declared tier {declared_tier} to {final_tier} (highest-risk-tier-wins).")
+
+    if not governance_affecting:
+        disposition = "PASS_NON_GOVERNANCE"
+        passed = True
+    elif declaration_errors:
+        disposition = "REJECT_MISSING_DECLARATION"
+        passed = False
+    elif c0_findings:
+        disposition = "REJECT_INADMISSIBLE_WEAKENING"
+        passed = False
+    elif final_tier == "C0":
+        disposition = "ACCEPT_C0_HARDENING"
+        passed = True
+    else:
+        disposition = "ACCEPT_C2_AMENDMENT"
+        passed = True
+
+    return AssessmentResult(
+        governance_affecting=governance_affecting,
+        declared_tier=declared_tier,
+        derived_tier=derived_tier,
+        final_tier=final_tier,
+        disposition=disposition,
+        rationale=rationale,
+        declaration_errors=declaration_errors,
+        c0_findings=c0_findings,
+        baseline_results=baseline_results,
+        passed=passed,
+    )
+
+
+def assess_governance_survival(
+    *,
+    changed_files: set[str],
+    pr_body: str,
+    head_policy: dict[str, Any],
+    base_policy: dict[str, Any],
+    enacted_policy: dict[str, Any],
+    head_ci: str,
+    base_ci: str,
+    enacted_ci: str,
+    head_present_paths: set[str],
+    profile: str = PROFILE_LOCAL_FULL,
+) -> AssessmentResult:
+    if profile == PROFILE_LOCAL_FULL:
+        return assess_local_full(
+            changed_files=changed_files,
+            pr_body=pr_body,
+            head_policy=head_policy,
+            base_policy=base_policy,
+            enacted_policy=enacted_policy,
+            head_ci=head_ci,
+            base_ci=base_ci,
+            enacted_ci=enacted_ci,
+            head_present_paths=head_present_paths,
+        )
+    if profile == PROFILE_STAGE0_MIN_FLOOR:
+        return assess_stage0_min_floor(
+            changed_files=changed_files,
+            pr_body=pr_body,
+            head_policy=head_policy,
+            base_policy=base_policy,
+            enacted_policy=enacted_policy,
+            head_ci=head_ci,
+            base_ci=base_ci,
+            enacted_ci=enacted_ci,
+            head_present_paths=head_present_paths,
+        )
+    raise ValueError(f"Unsupported profile: {profile}")
+
+
 def read_json_file(path: Path) -> dict[str, Any]:
     if not path.is_file():
         raise ValueError(f"Missing JSON file: {path.as_posix()}")
@@ -549,6 +702,12 @@ def print_trace(result: AssessmentResult) -> None:
 def main() -> int:
     parser = argparse.ArgumentParser(description="Verify governance survival non-regression.")
     parser.add_argument("--check", action="store_true", help="Run checks.")
+    parser.add_argument(
+        "--profile",
+        choices=sorted(PROFILE_VALUES),
+        default=PROFILE_LOCAL_FULL,
+        help=f"Assessment profile (default: {PROFILE_LOCAL_FULL}).",
+    )
     args = parser.parse_args()
 
     if not args.check:
@@ -627,6 +786,7 @@ def main() -> int:
         base_ci=base_ci,
         enacted_ci=enacted_ci,
         head_present_paths=present_paths(all_anchor_paths()),
+        profile=args.profile,
     )
 
     print_trace(result)

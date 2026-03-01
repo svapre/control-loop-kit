@@ -15,6 +15,7 @@ SUITES = {
         ["python", "scripts/validate_backlog.py", "--check"],
         ["python", "scripts/render_dashboard.py", "--check"],
         ["python", "scripts/verify_control_loop.py", "--check"],
+        ["python", "scripts/verify_governance_survival.py", "--check", "--profile", "stage0_min_floor"],
         ["python", "-m", "ruff", "check", "."],
         ["python", "-m", "pytest", "-q"],
     ],

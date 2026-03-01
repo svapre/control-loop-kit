@@ -2,6 +2,26 @@
 
 This log tracks changes to control-system process, policy, and governance artifacts.
 
+## 2026-03-01 - Slice 2A Stage0-capable minimum survival floor (implementation only)
+- Added Stage0-capable governance survival profile:
+  - `scripts/verify_governance_survival.py` now supports `--profile stage0_min_floor` alongside default local/full behavior.
+- Stage0 minimum-floor profile behavior:
+  - declaration enforcement applies only for Stage0 overlap scope,
+  - checks only minimum C0 survival posture,
+  - keeps richer local/full semantics outside Stage0 minimum-floor mode.
+- Updated Stage0 gate suite definition:
+  - `scripts/run_gate_suite.py --suite stage0` now includes
+    `python scripts/verify_governance_survival.py --check --profile stage0_min_floor`.
+- Added/updated governance survival contract tests for:
+  - Stage0 declaration overlap scoping,
+  - C0 weakening rejection in overlap scope,
+  - minimum-posture-only Stage0 behavior,
+  - preservation of existing local/full Slice 1 behavior.
+- Updated gate-suite documentation to describe Stage0 minimum-floor semantics.
+- This is implementation-only for Slice 2A:
+  - no `.github/workflows/ci.yml` change,
+  - no `STAGE0_TAG` promotion/bump (Slice 2B).
+
 ## 2026-02-27 - Stage0 v0.7.0 activation in CI
 - Published release tag `v0.7.0` from `master`.
 - Updated CI Stage0 controller pin:
