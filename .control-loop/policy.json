@@ -188,6 +188,7 @@
       "scripts/verify_control_loop.py",
       "scripts/run_gate_suite.py",
       "scripts/verify_governance_authority.py",
+      "scripts/verify_governance_survival.py",
       ".github/workflows/ci.yml",
       ".control-loop/policy.json",
       "GOVERNANCE.md"
@@ -203,6 +204,7 @@
       "scripts/verify_control_loop.py",
       "scripts/run_gate_suite.py",
       "scripts/verify_governance_authority.py",
+      "scripts/verify_governance_survival.py",
       ".github/workflows/ci.yml",
       ".control-loop/policy.json",
       "GOVERNANCE.md"
