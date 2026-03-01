@@ -195,6 +195,9 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         run: python scripts/verify_governance_authority.py --check
 
+      - name: Governance Survival Check
+        run: python scripts/verify_governance_survival.py --check
+
       - name: Control Gate (state government - artifact compliance)
         run: python -m control_loop.control_gate --mode ci
 
