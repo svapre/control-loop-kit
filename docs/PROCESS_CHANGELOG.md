@@ -2,6 +2,14 @@
 
 This log tracks changes to control-system process, policy, and governance artifacts.
 
+## 2026-03-01 - Slice 2B Stage0 minimum-floor activation (promotion)
+- Published release tag `v0.8.0` from commit `17728d3` (Slice 2A baseline).
+- Updated CI Stage0 controller pin:
+  - `.github/workflows/ci.yml` now sets `STAGE0_TAG: v0.8.0` (was `v0.7.0`).
+- Constitutional effect:
+  - activates Stage0 minimum C0 survival-floor adjudication in the pinned external judge path.
+  - local checker remains broader/redundant self-governance visibility; no new governance logic introduced in this promotion PR.
+
 ## 2026-03-01 - Slice 2A Stage0-capable minimum survival floor (implementation only)
 - Added Stage0-capable governance survival profile:
   - `scripts/verify_governance_survival.py` now supports `--profile stage0_min_floor` alongside default local/full behavior.

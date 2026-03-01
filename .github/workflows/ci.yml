@@ -5,7 +5,7 @@ on:
   pull_request:
 
 env:
-  STAGE0_TAG: v0.7.0
+  STAGE0_TAG: v0.8.0
 
 jobs:
   detect-governance-changes:
