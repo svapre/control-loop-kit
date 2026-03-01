@@ -2,6 +2,22 @@
 
 This log tracks changes to control-system process, policy, and governance artifacts.
 
+## 2026-03-01 - Structured amendment artifact channel (overlap stage)
+- Replaced PR-body declaration as primary machine-readable source with repository-tracked amendment artifacts:
+  - `.control-loop/amendments/<slug>.json`.
+- Governance-affecting PRs now require exactly one changed amendment artifact file.
+- Added amendment artifact schema v1 validation:
+  - required fields present,
+  - `schema_version` must be `"1"`,
+  - `amendment_id` must equal filename stem,
+  - `candidate_tier` must be `C0`, `C1`, or `C2`,
+  - `draft_status` must be `draft`,
+  - optional fields allowed: `rationale`, `references`, `notes`.
+- Overlap behavior:
+  - PR-body declaration is optional.
+  - if PR-body declaration is present, key fields must match artifact values.
+- Existing tier doctrine, admissibility logic, and survival-floor checks remain unchanged aside from declaration source handling.
+
 ## 2026-03-01 - Slice 2B Stage0 minimum-floor activation (promotion)
 - Published release tag `v0.8.0` from commit `17728d3` (Slice 2A baseline).
 - Updated CI Stage0 controller pin:

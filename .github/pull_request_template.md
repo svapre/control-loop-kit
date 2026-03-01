@@ -22,10 +22,16 @@
 ## Governance Approval (only for governance-file changes)
 - [ ] Confirmed this PR received required GitHub Environment approval (`governance-amendment`)
 
-## Constitutional Amendment Declaration (governance-affecting PRs only, interim Slice 1 source)
+## Constitutional Amendment Artifact (required for governance-affecting PRs)
+- Added exactly one file under `.control-loop/amendments/<slug>.json`
+- `amendment_id` equals filename stem
+- Minimal schema v1 fields are present and machine-parseable
+
+## Constitutional Amendment Declaration (optional transitional overlap mirror)
+- If present, declaration fields must match the amendment artifact key fields.
 - Legal object changed:
 - Affected layer:
-- Candidate tier: `C2`
+- Candidate tier:
 - Expected constitutional effect:
-- Draft status: `draft`
+- Draft status:
 

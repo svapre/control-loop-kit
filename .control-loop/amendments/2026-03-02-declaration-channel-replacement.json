@@ -1,0 +1,15 @@
+{
+  "schema_version": "1",
+  "amendment_id": "2026-03-02-declaration-channel-replacement",
+  "legal_object_changed": "constitutional amendment declaration channel source",
+  "affected_layer": "toolkit-as-project governance assurance process",
+  "candidate_tier": "C1",
+  "expected_constitutional_effect": "replace PR-body declaration as primary machine-readable source with repository-tracked amendment artifact while preserving existing survival doctrine behavior",
+  "draft_status": "draft",
+  "rationale": "Improves governance portability and audit durability by making declaration metadata repository-tracked.",
+  "references": [
+    "docs/GOVERNANCE_MODEL.md",
+    "docs/PROCESS_CHANGELOG.md"
+  ],
+  "notes": "PR-body declaration remains optional overlap input; if present it must match artifact fields."
+}
