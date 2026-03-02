@@ -541,7 +541,7 @@ def test_artifact_requires_schema_version_v1() -> None:
     assert any("schema_version='1'" in item for item in result.declaration_errors)
 
 
-def test_pr_body_if_present_must_match_artifact() -> None:
+def test_pr_body_content_is_ignored_for_machine_admissibility() -> None:
     head = _policy()
     base = _policy()
     enacted = _policy()
@@ -570,9 +570,31 @@ def test_pr_body_if_present_must_match_artifact() -> None:
         head_present_paths=_all_anchor_paths(),
         artifact_payloads=_artifact_payload(candidate_tier="C2"),
     )
-    assert result.disposition == "REJECT_MISSING_DECLARATION"
-    assert result.passed is False
-    assert any("PR-body declaration mismatch with amendment artifact" in item for item in result.declaration_errors)
+    assert result.passed is True
+    assert result.disposition == "ACCEPT_C1_ESCALATED_REVIEW"
+    assert not any("PR-body declaration mismatch with amendment artifact" in item for item in result.declaration_errors)
+
+
+def test_non_governance_pr_does_not_require_artifact() -> None:
+    head = _policy()
+    base = _policy()
+    enacted = _policy()
+    changed = {"README.md"}
+
+    result = assess_governance_survival(
+        changed_files=changed,
+        pr_body="",
+        head_policy=head,
+        base_policy=base,
+        enacted_policy=enacted,
+        head_ci=_ci_text(),
+        base_ci=_ci_text(),
+        enacted_ci=_ci_text(),
+        head_present_paths=_all_anchor_paths(),
+    )
+    assert result.governance_affecting is False
+    assert result.disposition == "PASS_NON_GOVERNANCE"
+    assert result.passed is True
 
 
 def test_policy_driven_anchor_mapping_is_honored() -> None:

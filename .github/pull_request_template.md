@@ -27,8 +27,9 @@
 - `amendment_id` equals filename stem
 - Minimal schema v1 fields are present and machine-parseable
 
-## Constitutional Amendment Declaration (optional transitional overlap mirror)
-- If present, declaration fields must match the amendment artifact key fields.
+## Constitutional Amendment Declaration (optional human-readable note)
+- Not used for machine admissibility checks.
+- Machine declaration source is the amendment artifact under `.control-loop/amendments/<slug>.json`.
 - Legal object changed:
 - Affected layer:
 - Candidate tier:
