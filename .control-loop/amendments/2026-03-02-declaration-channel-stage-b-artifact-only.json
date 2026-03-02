@@ -1,0 +1,14 @@
+{
+  "schema_version": "1",
+  "amendment_id": "2026-03-02-declaration-channel-stage-b-artifact-only",
+  "legal_object_changed": "governance declaration-channel machine admissibility source",
+  "affected_layer": "toolkit governance enforcement runtime",
+  "candidate_tier": "C1",
+  "expected_constitutional_effect": "advance declaration channel from overlap to artifact-only machine enforcement without changing non-channel constitutional behavior",
+  "draft_status": "draft",
+  "rationale": "remove format-sensitive PR-body coupling from machine admissibility while preserving established tier and survival checks",
+  "references": [
+    "docs/PROCESS_CHANGELOG.md"
+  ],
+  "notes": "Stage B migration step after Stage A overlap."
+}

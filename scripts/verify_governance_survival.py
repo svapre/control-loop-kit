@@ -3,7 +3,7 @@
 Slice-1 scope:
 - Uses STAGE0_TAG as interim enacted-baseline source.
 - Uses structured amendment artifacts as primary metadata source.
-- Supports optional PR-body declaration overlap consistency checks.
+- Uses artifact-only machine declaration enforcement (Stage B).
 - Keeps semantic anchor categories separate from file/path realizations.
 """
 
@@ -101,14 +101,6 @@ AMENDMENT_ARTIFACT_DIR = ".control-loop/amendments"
 AMENDMENT_SCHEMA_VERSION = "1"
 GOVERNANCE_SURVIVAL_KEY = "governance_survival"
 
-DECLARATION_MARKERS = {
-    "legal_object_changed": "- Legal object changed:",
-    "affected_layer": "- Affected layer:",
-    "candidate_tier": "- Candidate tier:",
-    "expected_constitutional_effect": "- Expected constitutional effect:",
-    "draft_status": "- Draft status:",
-}
-
 LEGACY_FALLBACK_CI_SURVIVAL_MARKERS = [
     ("stage0_pin", "STAGE0_TAG"),
     ("human_gate_environment", "governance-amendment"),
@@ -153,14 +145,6 @@ class SurvivalConfig:
 def run_command(cmd: list[str]) -> tuple[int, str, str]:
     proc = subprocess.run(cmd, capture_output=True, text=True)
     return proc.returncode, proc.stdout, proc.stderr
-
-
-def _get_marker_value(text: str, marker: str) -> str:
-    for raw_line in text.splitlines():
-        line = raw_line.strip()
-        if line.startswith(marker):
-            return line[len(marker) :].strip()
-    return ""
 
 
 def deep_merge(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
@@ -335,19 +319,6 @@ def load_amendment_artifact_json(
     return data, None
 
 
-def parse_amendment_declaration_from_text(text: str) -> AmendmentDeclaration | None:
-    values = {key: _get_marker_value(text, marker) for key, marker in DECLARATION_MARKERS.items()}
-    if not any(values.values()):
-        return None
-    return AmendmentDeclaration(
-        legal_object_changed=values["legal_object_changed"],
-        affected_layer=values["affected_layer"],
-        candidate_tier=values["candidate_tier"].upper(),
-        expected_constitutional_effect=values["expected_constitutional_effect"],
-        draft_status=values["draft_status"],
-    )
-
-
 def parse_amendment_declaration_from_artifact(
     path: str,
     data: dict[str, Any],
@@ -416,34 +387,6 @@ def validate_declaration(decl: AmendmentDeclaration | None) -> list[str]:
         failures.append("Declaration field is empty: draft status")
     elif status != "draft":
         failures.append("Declaration draft status must be exactly 'draft'.")
-    return failures
-
-
-def compare_declarations_for_overlap(
-    artifact_decl: AmendmentDeclaration,
-    pr_decl: AmendmentDeclaration,
-) -> list[str]:
-    failures: list[str] = []
-    checks = [
-        (
-            "legal object changed",
-            artifact_decl.legal_object_changed.strip(),
-            pr_decl.legal_object_changed.strip(),
-        ),
-        ("affected layer", artifact_decl.affected_layer.strip(), pr_decl.affected_layer.strip()),
-        ("candidate tier", artifact_decl.candidate_tier.strip().upper(), pr_decl.candidate_tier.strip().upper()),
-        (
-            "expected constitutional effect",
-            artifact_decl.expected_constitutional_effect.strip(),
-            pr_decl.expected_constitutional_effect.strip(),
-        ),
-        ("draft status", artifact_decl.draft_status.strip().lower(), pr_decl.draft_status.strip().lower()),
-    ]
-    for label, artifact_value, pr_value in checks:
-        if artifact_value != pr_value:
-            failures.append(
-                f"PR-body declaration mismatch with amendment artifact for {label}."
-            )
     return failures
 
 
@@ -602,7 +545,6 @@ def resolve_declaration_for_scope(
     *,
     changed_files: set[str],
     governance_affecting: bool,
-    pr_body: str,
     artifact_payloads: dict[str, dict[str, Any]] | None,
 ) -> tuple[AmendmentDeclaration | None, list[str]]:
     if not governance_affecting:
@@ -627,11 +569,6 @@ def resolve_declaration_for_scope(
         return None, parse_errors
 
     failures.extend(validate_declaration(decl))
-
-    # Overlap mode: PR-body declaration is optional, but if present it must match.
-    pr_decl = parse_amendment_declaration_from_text(pr_body)
-    if pr_decl is not None and decl is not None:
-        failures.extend(compare_declarations_for_overlap(decl, pr_decl))
 
     return decl, failures
 
@@ -715,7 +652,6 @@ def assess_local_full(
     declaration, declaration_errors = resolve_declaration_for_scope(
         changed_files=changed_files,
         governance_affecting=governance_affecting,
-        pr_body=pr_body,
         artifact_payloads=artifact_payloads,
     )
     declared_tier = declaration.candidate_tier if declaration is not None and declaration.candidate_tier in TIER_VALUES else None
@@ -838,7 +774,6 @@ def assess_stage0_min_floor(
     declaration, declaration_errors = resolve_declaration_for_scope(
         changed_files=changed_files,
         governance_affecting=governance_affecting,
-        pr_body=pr_body,
         artifact_payloads=artifact_payloads,
     )
     declared_tier = declaration.candidate_tier if declaration is not None and declaration.candidate_tier in TIER_VALUES else None

@@ -2,6 +2,23 @@
 
 This log tracks changes to control-system process, policy, and governance artifacts.
 
+## 2026-03-02 - Structured amendment artifact channel (Stage B artifact-only enforcement)
+- Advanced declaration-channel migration from overlap mode to artifact-only machine enforcement.
+- Governance-affecting PR machine admissibility now relies only on exactly one amendment artifact under:
+  - `.control-loop/amendments/<slug>.json`.
+- Artifact schema v1 remains authoritative:
+  - `schema_version == "1"`,
+  - required fields present,
+  - `candidate_tier in {C0,C1,C2}`,
+  - `draft_status == "draft"`,
+  - `amendment_id == filename stem`.
+- PR-body declaration text is no longer part of machine admissibility evaluation.
+- Existing non-channel constitutional behavior remains unchanged:
+  - tier derivation and highest-risk-tier-wins,
+  - admissibility and C0/C1 degradation detection,
+  - Stage0/local profile split,
+  - baseline comparison logic.
+
 ## 2026-03-01 - Structured amendment artifact channel (overlap stage)
 - Replaced PR-body declaration as primary machine-readable source with repository-tracked amendment artifacts:
   - `.control-loop/amendments/<slug>.json`.
